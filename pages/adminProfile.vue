@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h1>Profile Page</h1>
-    <p v-if="user">Welcome, {{ user.pseudo }} ({{ user.email }})</p>
+    <h1>Admin Profile Page</h1>
+    <p v-if="user">Welcome, Admin {{ user.pseudo }} ({{ user.email }})</p>
     <p v-else>Loading...</p>
   </div>
 </template>
@@ -15,10 +15,10 @@ export default {
   },
   async fetch() {
     try {
-      const response = await this.$axios.get('/users/profile');
+      const response = await this.$axios.get('/users/adminProfile');
       this.user = response.data;
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching admin data:', error);
     }
   },
   middleware: 'auth'
