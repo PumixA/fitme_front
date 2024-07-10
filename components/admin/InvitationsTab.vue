@@ -1,7 +1,7 @@
 <template>
   <div class="invitations-tab">
     <h2>Invitations</h2>
-    <button @click="showModal = true">Créer une Invitation</button>
+    <button @click="showModal = true" class="btn-primary">Créer une Invitation</button>
     <input type="text" v-model="searchQuery" placeholder="Rechercher" />
     <table>
       <thead>
@@ -17,22 +17,26 @@
         <td>{{ invitation.email || 'N/A' }}</td>
         <td>{{ invitation.nombre_utilisation }}</td>
         <td>{{ invitation.limite_utilisation }}</td>
-        <td>{{ formatDate(invitation.date_utilisation) }}</td>
+        <td>{{ invitation.date_utilisation ? formatDate(invitation.date_utilisation) : 'Non utilisé' }}</td>
       </tr>
       </tbody>
     </table>
+
+    <!-- Modal -->
     <Modal :visible="showModal" @close="showModal = false" title="Créer une Invitation">
       <form @submit.prevent="createInvitation">
-        <div>
-          <label for="email">Email:</label>
-          <input type="email" v-model="newInvitation.email" required />
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" v-model="newInvitation.email" />
         </div>
-        <div>
-          <label for="limite_utilisation">Limite d'utilisation:</label>
+        <div class="form-group">
+          <label for="limite_utilisation">Limite d'utilisation</label>
           <input type="number" v-model="newInvitation.limite_utilisation" required />
         </div>
-        <button type="submit">Créer</button>
-        <button type="button" @click="showModal = false">Annuler</button>
+        <div class="modal-footer">
+          <button type="button" @click="showModal = false" class="btn-secondary">Annuler</button>
+          <button type="submit" class="btn-primary">Créer</button>
+        </div>
       </form>
     </Modal>
   </div>
@@ -71,25 +75,27 @@ export default {
     createInvitation() {
       this.$axios.post('/admin/users/inviter', this.newInvitation)
         .then(response => {
-          this.invitations.push(response.data);
           this.showModal = false;
           this.newInvitation.email = '';
           this.newInvitation.limite_utilisation = 1;
+          this.fetchInvitations(); // Update the invitations table
         })
         .catch(error => {
           console.error('Error creating invitation:', error);
         });
+    },
+    fetchInvitations() {
+      this.$axios.get('/admin/users/inviter/getall')
+        .then(response => {
+          this.invitations = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching invitations:', error);
+        });
     }
   },
   mounted() {
-    // Fetch data from API
-    this.$axios.get('/admin/users/inviter/getall')
-      .then(response => {
-        this.invitations = response.data;
-      })
-      .catch(error => {
-        console.error('Error fetching invitations:', error);
-      });
+    this.fetchInvitations();
   }
 }
 </script>
@@ -122,14 +128,29 @@ input[type="text"], input[type="email"], input[type="number"] {
 }
 
 button {
-  background-color: #1abc9c;
-  color: white;
-  border: none;
   padding: 0.5em 1em;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #16a085;
+  opacity: 0.8;
+}
+
+.btn-primary {
+  background-color: #1abc9c;
+  color: white;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #ccc;
+  color: #333;
+  border: none;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

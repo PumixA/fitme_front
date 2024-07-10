@@ -1,9 +1,9 @@
 <template>
   <div class="modal-overlay" v-if="visible">
-    <div class="modal">
+    <div class="modal-container">
       <div class="modal-header">
         <h3>{{ title }}</h3>
-        <button @click="close">X</button>
+        <button @click="close" class="close-button">X</button>
       </div>
       <div class="modal-body">
         <slot></slot>
@@ -25,7 +25,7 @@ export default {
     }
   },
   methods: {
-    close() {
+    close () {
       this.$emit('close');
     }
   }
@@ -43,14 +43,15 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
 }
 
-.modal {
+.modal-container {
   background: white;
-  padding: 1em;
+  padding: 20px;
   border-radius: 8px;
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  max-width: 90%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -58,9 +59,18 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
 }
 
 .modal-body {
-  margin-top: 1em;
+  padding-top: 10px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
 }
 </style>
