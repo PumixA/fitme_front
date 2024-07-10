@@ -8,7 +8,7 @@ export default function ({ store, redirect, route }) {
 
   if (isAuthenticated && route.name === 'login') {
     if (userRole === 'admin') {
-      return redirect('/adminDashboard');
+      return redirect('/admin/adminDashboard');
     } else if (userRole === 'utilisateur') {
       return redirect('/profile');
     } else if (userRole === 'banni') {

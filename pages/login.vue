@@ -59,7 +59,7 @@ export default {
         this.$store.commit('setUserRole', userRole);
 
         if (userRole === 'admin') {
-          this.$router.push('/adminDashboard');
+          this.$router.push('/admin/adminDashboard');
         } else if (userRole === 'utilisateur') {
           this.$router.push('/profile');
         } else if (userRole === 'banni') {

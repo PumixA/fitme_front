@@ -3,7 +3,7 @@
     <aside class="sidebar">
       <nav>
         <ul>
-          <li :class="{ active: isActive('/adminDashboard') }"><nuxt-link to="/adminDashboard">Dashboard</nuxt-link></li>
+          <li :class="{ active: isActive('/admin/adminDashboard') }"><nuxt-link to="/admin/adminDashboard">Dashboard</nuxt-link></li>
           <li :class="{ active: isActive('/admin/demandesInvitations') }"><nuxt-link to="/admin/demandesInvitations">Demandes Invitations</nuxt-link></li>
           <li :class="{ active: isActive('/admin/exercices') }"><nuxt-link to="/admin/exercices">Exercices</nuxt-link></li>
           <li :class="{ active: isActive('/admin/groupeMusculaire') }"><nuxt-link to="/admin/groupeMusculaire">Groupes Musculaires</nuxt-link></li>
