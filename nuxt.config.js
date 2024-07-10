@@ -50,7 +50,24 @@ export default {
   },
 
   router: {
-    middleware: ['auth']
+    middleware: ['auth'],
+    extendRoutes(routes, resolve) {
+      // Fonction pour vérifier l'existence d'une route par nom
+      const addRoute = (name, path, component) => {
+        if (!routes.some(route => route.name === name)) {
+          routes.push({ name, path, component });
+        }
+      };
+
+      addRoute('register-token', '/register/:token?', resolve(__dirname, 'pages/register.vue'));
+      addRoute('adminDashboard', '/adminDashboard', resolve(__dirname, 'pages/admin/adminDashboard.vue'));
+      addRoute('demandesInvitations', '/admin/demandesInvitations', resolve(__dirname, 'pages/admin/demandesInvitations.vue'));
+      addRoute('exercices', '/admin/exercices', resolve(__dirname, 'pages/admin/exercices.vue'));
+      addRoute('groupeMusculaire', '/admin/groupeMusculaire', resolve(__dirname, 'pages/admin/groupeMusculaire.vue'));
+      addRoute('invitations', '/admin/invitations', resolve(__dirname, 'pages/admin/invitations.vue'));
+      addRoute('utilisateurs', '/admin/utilisateurs', resolve(__dirname, 'pages/admin/utilisateurs.vue'));
+      addRoute('bannissement', '/bannissement', resolve(__dirname, 'pages/bannissement.vue'));
+    }
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

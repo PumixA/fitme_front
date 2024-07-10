@@ -13,6 +13,17 @@
       <button type="submit">Login</button>
     </form>
     <p v-if="error">{{ error }}</p>
+
+    <h2>Vous souhaitez participer à la bêta?</h2>
+    <form @submit.prevent="requestBetaAccess">
+      <div>
+        <label for="betaEmail">Email:</label>
+        <input type="email" v-model="betaEmail" required>
+      </div>
+      <button type="submit">Envoyer</button>
+    </form>
+    <p v-if="betaError">{{ betaError }}</p>
+    <p v-if="betaSuccess">{{ betaSuccess }}</p>
   </div>
 </template>
 
@@ -22,31 +33,57 @@ export default {
     return {
       email: '',
       password: '',
-      error: ''
+      betaEmail: '',
+      error: '',
+      betaError: '',
+      betaSuccess: ''
     }
   },
   methods: {
     async login() {
       try {
         const response = await this.$axios.post('/users/login', {
-          email: this.email,
+          emailOrPseudo: this.email,
           password: this.password
         });
         const { token } = response.data;
-        const userRole = this.parseJwt(token).role; // Extraire le rôle du JWT
-        this.$cookies.set('jwt', token, { path: '/', maxAge: 60 * 60 }); // 1 heure
-        this.$cookies.set('userRole', userRole, { path: '/', maxAge: 60 * 60 }); // 1 heure
+        const userRole = this.parseJwt(token).role;
+        const userId = this.parseJwt(token).id;
+
+        this.$cookies.set('jwt', token, { path: '/', maxAge: 60 * 60 });
+        this.$cookies.set('userId', userId, { path: '/', maxAge: 60 * 60 });
+        this.$cookies.set('userRole', userRole, { path: '/', maxAge: 60 * 60 });
+
         this.$store.commit('setToken', token);
+        this.$store.commit('setUserId', userId);
         this.$store.commit('setUserRole', userRole);
+
         if (userRole === 'admin') {
-          this.$router.push('/adminProfile');
+          this.$router.push('/adminDashboard');
         } else if (userRole === 'utilisateur') {
           this.$router.push('/profile');
+        } else if (userRole === 'banni') {
+          this.$router.push('/bannissement');
         } else {
           this.error = 'Role not recognized';
         }
       } catch (error) {
         this.error = 'Login failed. Please check your credentials and try again.';
+      }
+    },
+    async requestBetaAccess() {
+      try {
+        const response = await this.$axios.post('/invitations/demandes_invitation', {
+          email: this.betaEmail
+        });
+        this.betaSuccess = 'Demande envoyée avec succès';
+        this.betaError = '';
+      } catch (error) {
+        if (error.response && error.response.data && error.response.data.message) {
+          this.betaError = error.response.data.message;
+        } else {
+          this.betaError = 'Une erreur est survenue. Veuillez réessayer.';
+        }
       }
     },
     parseJwt(token) {
@@ -63,7 +100,6 @@ export default {
 </script>
 
 <style scoped>
-/* Add some basic styling */
 .login {
   max-width: 400px;
   margin: auto;

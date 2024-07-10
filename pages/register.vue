@@ -1,7 +1,7 @@
 <template>
   <div class="register">
     <h1>Register</h1>
-    <form @submit.prevent="register">
+    <form v-if="isTokenValid" @submit.prevent="register">
       <div>
         <label for="pseudo">Pseudo:</label>
         <input type="text" v-model="pseudo" required>
@@ -16,7 +16,11 @@
       </div>
       <button type="submit">Register</button>
     </form>
+    <p v-else>Invalid token. Redirecting to login...</p>
     <p v-if="error">{{ error }}</p>
+    <p v-if="isTokenValid">
+      Déjà un compte? <nuxt-link to="/login">Se connecter</nuxt-link>
+    </p>
   </div>
 </template>
 
@@ -27,13 +31,29 @@ export default {
       pseudo: '',
       email: '',
       password: '',
-      error: ''
+      error: '',
+      isTokenValid: false
+    }
+  },
+  async created() {
+    const token = this.$route.params.token;
+    if (!token) {
+      this.$router.push('/login');
+      return;
+    }
+
+    try {
+      await this.$axios.get(`/users/register/verifytoken/${token}`);
+      this.isTokenValid = true;
+    } catch (error) {
+      this.$router.push('/login');
     }
   },
   methods: {
     async register() {
+      const token = this.$route.params.token;
       try {
-        await this.$axios.post('/users/register', {
+        await this.$axios.post(`/users/register/${token}`, {
           pseudo: this.pseudo,
           email: this.email,
           password: this.password
@@ -48,7 +68,6 @@ export default {
 </script>
 
 <style scoped>
-/* Add some basic styling */
 .register {
   max-width: 400px;
   margin: auto;

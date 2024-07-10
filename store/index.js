@@ -1,7 +1,7 @@
 export const state = () => ({
   token: null,
   userId: null,
-  userRole: null // Ajoutez le rôle de l'utilisateur
+  userRole: null
 });
 
 export const mutations = {

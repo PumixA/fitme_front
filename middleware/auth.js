@@ -1,16 +1,18 @@
 export default function ({ store, redirect, route }) {
   const isAuthenticated = !!store.state.token;
-  const userRole = store.state.userRole; // Assurez-vous que le rôle de l'utilisateur est stocké dans le store
+  const userRole = store.state.userRole;
 
-  if (!isAuthenticated && (route.name === 'index' || route.name === 'profile' || route.name === 'adminProfile')) {
+  if (!isAuthenticated && (route.name !== 'login' && route.name !== 'register' && route.name !== 'register-token')) {
     return redirect('/login');
   }
 
   if (isAuthenticated && route.name === 'login') {
     if (userRole === 'admin') {
-      return redirect('/adminProfile');
+      return redirect('/adminDashboard');
     } else if (userRole === 'utilisateur') {
       return redirect('/profile');
+    } else if (userRole === 'banni') {
+      return redirect('/bannissement');
     }
   }
 
@@ -18,11 +20,11 @@ export default function ({ store, redirect, route }) {
     return redirect('/');
   }
 
-  if (route.name === 'profile' && userRole !== 'utilisateur') {
-    return redirect('/');
+  if (route.name.startsWith('admin') && userRole !== 'admin') {
+    return redirect('/profile');
   }
 
-  if (route.name === 'adminProfile' && userRole !== 'admin') {
-    return redirect('/');
+  if (route.name === 'profile' && userRole === 'banni') {
+    return redirect('/bannissement');
   }
 }

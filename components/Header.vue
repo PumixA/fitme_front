@@ -1,14 +1,14 @@
 <template>
-  <header>
-    <nav>
-      <ul>
-        <li v-if="!isAuthenticated"><nuxt-link to="/login">Login</nuxt-link></li>
-        <li v-if="!isAuthenticated"><nuxt-link to="/register">Register</nuxt-link></li>
-        <li v-if="isAuthenticated"><nuxt-link to="/profile">Profile</nuxt-link></li>
-        <li v-if="isAuthenticated"><button @click="logout">Logout</button></li>
-      </ul>
-    </nav>
-  </header>
+  <div v-if="isAuthenticated">
+    <header>
+      <nav>
+        <ul>
+          <li><nuxt-link to="/profile">Profile</nuxt-link></li>
+          <li><button @click="logout">Logout</button></li>
+        </ul>
+      </nav>
+    </header>
+  </div>
 </template>
 
 <script>
@@ -28,7 +28,6 @@ export default {
 </script>
 
 <style scoped>
-/* Add some basic styling */
 header {
   background: #333;
   color: white;
