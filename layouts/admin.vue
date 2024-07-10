@@ -4,7 +4,6 @@
       <nav>
         <ul>
           <li :class="{ active: isActive('/admin/adminDashboard') }"><nuxt-link to="/admin/adminDashboard">Dashboard</nuxt-link></li>
-          <li :class="{ active: isActive('/admin/demandesInvitations') }"><nuxt-link to="/admin/demandesInvitations">Demandes Invitations</nuxt-link></li>
           <li :class="{ active: isActive('/admin/exercices') }"><nuxt-link to="/admin/exercices">Exercices</nuxt-link></li>
           <li :class="{ active: isActive('/admin/groupeMusculaire') }"><nuxt-link to="/admin/groupeMusculaire">Groupes Musculaires</nuxt-link></li>
           <li :class="{ active: isActive('/admin/invitations') }"><nuxt-link to="/admin/invitations">Invitations</nuxt-link></li>

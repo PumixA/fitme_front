@@ -61,7 +61,6 @@ export default {
 
       addRoute('register-token', '/register/:token?', resolve(__dirname, 'pages/register.vue'));
       addRoute('adminDashboard', '/admin/adminDashboard', resolve(__dirname, 'pages/admin/adminDashboard.vue'));
-      addRoute('demandesInvitations', '/admin/demandesInvitations', resolve(__dirname, 'pages/admin/demandesInvitations.vue'));
       addRoute('exercices', '/admin/exercices', resolve(__dirname, 'pages/admin/exercices.vue'));
       addRoute('groupeMusculaire', '/admin/groupeMusculaire', resolve(__dirname, 'pages/admin/groupeMusculaire.vue'));
       addRoute('invitations', '/admin/invitations', resolve(__dirname, 'pages/admin/invitations.vue'));
