@@ -7,12 +7,14 @@
       <tr>
         <th>Email</th>
         <th>Date de Demande</th>
+        <th>Action</th>
       </tr>
       </thead>
       <tbody>
       <tr v-for="demande in filteredDemandes" :key="demande.id">
         <td>{{ demande.email }}</td>
         <td>{{ formatDate(demande.date_invitation) }}</td>
+        <td><button @click="deleteDemande(demande.id)">✔️</button></td>
       </tr>
       </tbody>
     </table>
@@ -24,7 +26,7 @@ export default {
   data() {
     return {
       searchQuery: '',
-      demandes: [] // Initialisez avec les données des demandes
+      demandes: []
     }
   },
   computed: {
@@ -38,17 +40,30 @@ export default {
     formatDate(dateString) {
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
       return new Date(dateString).toLocaleDateString('fr-FR', options);
+    },
+    deleteDemande(id) {
+      if (confirm("Êtes-vous sûr de vouloir supprimer cette demande ?")) {
+        this.$axios.delete(`/admin/demandes_invitation/${id}`)
+          .then(response => {
+            this.fetchDemandes();
+          })
+          .catch(error => {
+            console.error('Error deleting demande:', error);
+          });
+      }
+    },
+    fetchDemandes() {
+      this.$axios.get('/admin/demandes_invitation')
+        .then(response => {
+          this.demandes = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching demandes:', error);
+        });
     }
   },
   mounted() {
-    // Fetch data from API
-    this.$axios.get('/admin/demandes_invitation')
-      .then(response => {
-        this.demandes = response.data;
-      })
-      .catch(error => {
-        console.error('Error fetching demandes:', error);
-      });
+    this.fetchDemandes();
   }
 }
 </script>
@@ -78,5 +93,17 @@ input[type="text"] {
   padding: 0.5em;
   width: 100%;
   box-sizing: border-box;
+}
+
+button {
+  padding: 0.5em 1em;
+  cursor: pointer;
+  background-color: #1abc9c;
+  color: white;
+  border: none;
+}
+
+button:hover {
+  background-color: #16a085;
 }
 </style>
