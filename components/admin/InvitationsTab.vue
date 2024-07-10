@@ -1,7 +1,7 @@
 <template>
   <div class="invitations-tab">
     <h2>Invitations</h2>
-    <button @click="showModal = true" class="btn-primary">Créer une Invitation</button>
+    <button @click="openCreateInvitationModal" class="btn-primary">Créer une Invitation</button>
     <input type="text" v-model="searchQuery" placeholder="Rechercher" />
     <table>
       <thead>
@@ -10,6 +10,7 @@
         <th>Nbr Utilisations</th>
         <th>Limite Utilisation</th>
         <th>Date d'utilisation</th>
+        <th>Action</th>
       </tr>
       </thead>
       <tbody>
@@ -18,12 +19,13 @@
         <td>{{ invitation.nombre_utilisation }}</td>
         <td>{{ invitation.limite_utilisation }}</td>
         <td>{{ invitation.date_utilisation ? formatDate(invitation.date_utilisation) : 'Non utilisé' }}</td>
+        <td><button @click="showRegistrationLink(invitation.id)">...</button></td>
       </tr>
       </tbody>
     </table>
 
-    <!-- Modal -->
-    <Modal :visible="showModal" @close="showModal = false" title="Créer une Invitation">
+    <!-- Modal for creating invitation -->
+    <Modal :visible="showCreateModal" @close="closeCreateModal" title="Créer une Invitation">
       <form @submit.prevent="createInvitation">
         <div class="form-group">
           <label for="email">Email</label>
@@ -34,16 +36,25 @@
           <input type="number" v-model="newInvitation.limite_utilisation" required />
         </div>
         <div class="modal-footer">
-          <button type="button" @click="showModal = false" class="btn-secondary">Annuler</button>
+          <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Créer</button>
         </div>
       </form>
+    </Modal>
+
+    <!-- Modal for displaying registration link and QR code -->
+    <Modal :visible="showLinkModal" @close="closeLinkModal" title="Lien d'invitation">
+      <div v-if="registrationLink">
+        <p>{{ registrationLink }}</p>
+        <div ref="qrcode"></div>
+      </div>
     </Modal>
   </div>
 </template>
 
 <script>
 import Modal from '~/components/Modal.vue'
+import qrcode from 'qrcode-generator'
 
 export default {
   components: {
@@ -53,11 +64,13 @@ export default {
     return {
       searchQuery: '',
       invitations: [],
-      showModal: false,
+      showCreateModal: false,
+      showLinkModal: false,
       newInvitation: {
         email: '',
         limite_utilisation: 1
-      }
+      },
+      registrationLink: ''
     }
   },
   computed: {
@@ -75,7 +88,7 @@ export default {
     createInvitation() {
       this.$axios.post('/admin/users/inviter', this.newInvitation)
         .then(response => {
-          this.showModal = false;
+          this.closeCreateModal();
           this.newInvitation.email = '';
           this.newInvitation.limite_utilisation = 1;
           this.fetchInvitations(); // Update the invitations table
@@ -92,6 +105,41 @@ export default {
         .catch(error => {
           console.error('Error fetching invitations:', error);
         });
+    },
+    showRegistrationLink(id) {
+      this.$axios.get(`/admin/users/inviter/getone/${id}`)
+        .then(response => {
+          this.registrationLink = response.data.registrationLink;
+          this.showLinkModal = true;
+          this.$nextTick(() => {
+            this.generateQRCode(this.registrationLink);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching registration link:', error);
+        });
+    },
+    openCreateInvitationModal() {
+      this.showCreateModal = true;
+    },
+    closeCreateModal() {
+      this.showCreateModal = false;
+    },
+    closeLinkModal() {
+      this.showLinkModal = false;
+      this.registrationLink = '';
+      this.clearQRCode();
+    },
+    generateQRCode(text) {
+      const qr = qrcode(0, 'L');
+      qr.addData(text);
+      qr.make();
+      this.$refs.qrcode.innerHTML = qr.createImgTag(6);
+    },
+    clearQRCode() {
+      if (this.$refs.qrcode) {
+        this.$refs.qrcode.innerHTML = '';
+      }
     }
   },
   mounted() {

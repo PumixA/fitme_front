@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-overlay" v-if="visible">
+  <div v-if="visible" class="modal-overlay">
     <div class="modal-container">
       <div class="modal-header">
         <h3>{{ title }}</h3>
@@ -25,7 +25,7 @@ export default {
     }
   },
   methods: {
-    close () {
+    close() {
       this.$emit('close');
     }
   }
@@ -50,7 +50,6 @@ export default {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  width: 400px;
   max-width: 90%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }

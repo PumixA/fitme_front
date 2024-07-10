@@ -18,7 +18,11 @@
     "cookie-universal-nuxt": "^2.2.2",
     "core-js": "^3.25.3",
     "nuxt": "^2.15.8",
+    "qrcode-generator": "^1.4.4",
+    "qrcode.vue": "^3.4.1",
     "vue": "^2.7.10",
+    "vue-qrcode": "^2.2.2",
+    "vue-qrcode-component": "^2.1.1",
     "vue-server-renderer": "^2.7.10",
     "vue-template-compiler": "^2.7.10"
   },
