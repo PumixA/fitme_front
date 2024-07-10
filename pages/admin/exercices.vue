@@ -41,6 +41,9 @@
           <label for="lien_video">Lien vidéo explicative</label>
           <input type="text" v-model="newExercice.lien_video" required />
         </div>
+        <div class="form-group">
+          <img :src="getExerciceImage(newExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal" />
+        </div>
         <div class="modal-footer">
           <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Enregistrer</button>
