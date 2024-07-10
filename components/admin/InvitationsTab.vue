@@ -19,7 +19,13 @@
         <td>{{ invitation.nombre_utilisation }}</td>
         <td>{{ invitation.limite_utilisation }}</td>
         <td>{{ invitation.date_utilisation ? formatDate(invitation.date_utilisation) : 'Non utilisé' }}</td>
-        <td><button @click="showRegistrationLink(invitation.id)">...</button></td>
+        <td>
+          <select @change="handleActionChange(invitation.id, $event)">
+            <option value="">...</option>
+            <option value="link">Afficher le lien</option>
+            <option value="edit">Modifier l'invitation</option>
+          </select>
+        </td>
       </tr>
       </tbody>
     </table>
@@ -49,6 +55,20 @@
         <div ref="qrcode"></div>
       </div>
     </Modal>
+
+    <!-- Modal for editing invitation -->
+    <Modal :visible="showEditModal" @close="closeEditModal" title="Modifier l'invitation">
+      <form @submit.prevent="editInvitation">
+        <div class="form-group">
+          <label for="edit_limite_utilisation">Limite d'utilisation</label>
+          <input type="number" v-model="editInvitationData.limite_utilisation" required />
+        </div>
+        <div class="modal-footer">
+          <button type="button" @click="closeEditModal" class="btn-secondary">Annuler</button>
+          <button type="submit" class="btn-primary">Modifier</button>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>
 
@@ -66,8 +86,13 @@ export default {
       invitations: [],
       showCreateModal: false,
       showLinkModal: false,
+      showEditModal: false,
       newInvitation: {
         email: '',
+        limite_utilisation: 1
+      },
+      editInvitationData: {
+        id: null,
         limite_utilisation: 1
       },
       registrationLink: ''
@@ -97,6 +122,17 @@ export default {
           console.error('Error creating invitation:', error);
         });
     },
+    editInvitation() {
+      const { id, limite_utilisation } = this.editInvitationData;
+      this.$axios.put(`/admin/users/inviter/edit/${id}`, { limite_utilisation })
+        .then(response => {
+          this.closeEditModal();
+          this.fetchInvitations(); // Update the invitations table
+        })
+        .catch(error => {
+          console.error('Error editing invitation:', error);
+        });
+    },
     fetchInvitations() {
       this.$axios.get('/admin/users/inviter/getall')
         .then(response => {
@@ -119,6 +155,20 @@ export default {
           console.error('Error fetching registration link:', error);
         });
     },
+    handleActionChange(id, event) {
+      const action = event.target.value;
+      if (action === 'link') {
+        this.showRegistrationLink(id);
+      } else if (action === 'edit') {
+        const invitation = this.invitations.find(inv => inv.id === id);
+        if (invitation) {
+          this.editInvitationData.id = id;
+          this.editInvitationData.limite_utilisation = invitation.limite_utilisation;
+          this.showEditModal = true;
+        }
+      }
+      event.target.value = ''; // Reset the select
+    },
     openCreateInvitationModal() {
       this.showCreateModal = true;
     },
@@ -129,6 +179,13 @@ export default {
       this.showLinkModal = false;
       this.registrationLink = '';
       this.clearQRCode();
+    },
+    closeEditModal() {
+      this.showEditModal = false;
+      this.editInvitationData = {
+        id: null,
+        limite_utilisation: 1
+      };
     },
     generateQRCode(text) {
       const qr = qrcode(0, 'L');
