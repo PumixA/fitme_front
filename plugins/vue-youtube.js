@@ -1,4 +1,3 @@
-// plugins/vue-youtube.js
 import Vue from 'vue'
 import VueYouTubeEmbed from 'vue-youtube'
 
