@@ -50,6 +50,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" @click="closeEditModal" class="btn-secondary">Annuler</button>
+          <button type="button" @click="deleteExercice" class="btn-danger">Supprimer</button>
         </div>
       </div>
     </Modal>
@@ -286,6 +287,16 @@ export default {
       this.selectedExercice.poids = this.series.map(serie => serie.poids);
       this.saveChanges();
     },
+    deleteExercice() {
+      this.$axios.put(`${this.backendUrl}/api/exercice_custom/delete/${this.selectedExercice._id}`)
+        .then(() => {
+          this.closeEditModal();
+          this.fetchExercices();
+        })
+        .catch(error => {
+          console.error('Error deleting exercice:', error);
+        });
+    },
     makeEditable(event) {
       event.target.readOnly = false;
     },
@@ -345,6 +356,14 @@ export default {
 .btn-secondary {
   background-color: #ccc;
   color: #333;
+  border: none;
+  padding: 0.5em 1em;
+  cursor: pointer;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
   border: none;
   padding: 0.5em 1em;
   cursor: pointer;
