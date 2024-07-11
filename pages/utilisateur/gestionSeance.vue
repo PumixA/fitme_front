@@ -14,12 +14,13 @@
     </div>
     <button @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
     <draggable v-model="seance.exercices" @end="updateOrder">
-      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id" class="exercise-item">
+      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id" class="exercise-item" @click="openExerciceDetails(exercice.id_exercice_custom._id)">
         <img :src="getImagePath(exercice.id_exercice_custom.photo)" alt="Photo de l'exercice" />
         <div class="exercise-info">
           <h3>{{ exercice.id_exercice_custom.nom }}</h3>
           <p>{{ exercice.id_exercice_custom.id_groupe_musculaire[0].nom }}</p>
         </div>
+        <button @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
 
@@ -49,6 +50,19 @@
         <button @click="addToSeance">Ajouter à la séance</button>
       </div>
     </Modal>
+
+    <!-- Modal for viewing exercise details in session -->
+    <Modal :visible="showExerciseDetailsModal" @close="closeExerciseDetailsModal" title="Détails de l'exercice">
+      <div v-if="exerciseDetails" class="modal-content">
+        <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
+        <h3>{{ exerciseDetails.nom }}</h3>
+        <p>{{ exerciseDetails.id_groupe_musculaire[0].nom }}</p>
+        <p>{{ exerciseDetails.description }}</p>
+        <div v-if="exerciseDetails.lien_video">
+          <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -72,8 +86,10 @@ export default {
       },
       allExercices: [],
       selectedExercice: null,
+      exerciseDetails: null,
       showAddExerciseModal: false,
       showSelectedExerciseModal: false,
+      showExerciseDetailsModal: false,
       backendUrl: 'http://localhost:4000',
       days: [
         { name: 'Lun', number: 1 },
@@ -194,29 +210,34 @@ export default {
       const match = url.match(regExp);
       return match && match[2].length === 11 ? match[2] : null;
     },
-    updateOrder(event) {
-      // Update the order of the exercises
+    updateOrder() {
       this.seance.exercices.forEach((ex, index) => {
         ex.ordre = index + 1;
       });
-
-      // Send the updated order to the server
-      const data = {
-        exercices: this.seance.exercices.map((ex) => ({
-          id_exercice_custom: ex.id_exercice_custom._id,
-          ordre: ex.ordre,
-        })),
-        jour_seance: this.seance.jour_seance,
-        nom: this.seance.nom,
-      };
+      this.updateSeance();
+    },
+    openExerciceDetails(exerciceId) {
       this.$axios
-        .put(`${this.backendUrl}/api/seance/edit/${this.$route.query.seanceId}`, data)
+        .get(`${this.backendUrl}/api/exercice_custom/getone/${exerciceId}`)
+        .then((response) => {
+          this.exerciseDetails = response.data;
+          this.showExerciseDetailsModal = true;
+        })
+        .catch((error) => {
+          console.error('Error fetching exercice details:', error);
+        });
+    },
+    closeExerciseDetailsModal() {
+      this.showExerciseDetailsModal = false;
+    },
+    deleteExercice(seanceId, exerciceCustomId) {
+      this.$axios
+        .put(`${this.backendUrl}/api/seance/deleteExercice/${seanceId}/${exerciceCustomId}`)
         .then(() => {
-          console.log('Order updated successfully');
           this.fetchSeance();
         })
         .catch((error) => {
-          console.error('Error updating exercise order:', error);
+          console.error('Error deleting exercice:', error);
         });
     },
   },
@@ -235,10 +256,9 @@ export default {
 .days span {
   padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 5px;
   cursor: pointer;
 }
-.days span.active {
+.days .active {
   background-color: #1abc9c;
   color: white;
 }
@@ -247,10 +267,9 @@ export default {
   align-items: center;
   padding: 10px;
   background-color: #f4f4f4;
-  margin-bottom: 10px;
   border: 1px solid #ddd;
-  border-radius: 5px;
   cursor: pointer;
+  position: relative;
 }
 .exercise-item:hover {
   background-color: #e0e0e0;
@@ -283,5 +302,19 @@ button {
 }
 button:hover {
   background-color: #16a085;
+}
+.delete-btn {
+  background-color: red;
+  color: white;
+  padding: 0.5em;
+  border: none;
+  border-radius: 5px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  background-color: darkred;
 }
 </style>
