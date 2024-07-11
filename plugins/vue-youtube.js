@@ -1,4 +1,5 @@
-import Vue from 'vue';
-import VueYoutube from 'vue-youtube-embed';
+// plugins/vue-youtube.js
+import Vue from 'vue'
+import VueYouTubeEmbed from 'vue-youtube'
 
-Vue.use(VueYoutube);
+Vue.use(VueYouTubeEmbed)

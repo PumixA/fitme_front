@@ -26,7 +26,7 @@
     "vue-qrcode-component": "^2.1.1",
     "vue-server-renderer": "^2.7.10",
     "vue-template-compiler": "^2.7.10",
-    "vue-youtube-embed": "^2.2.2"
+    "vue-youtube": "^1.4.0"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
