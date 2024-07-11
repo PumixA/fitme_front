@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  data() {
+  data () {
     return {
       email: '',
       password: '',
@@ -40,7 +40,7 @@ export default {
     }
   },
   methods: {
-    async login() {
+    async login () {
       try {
         const response = await this.$axios.post('/users/login', {
           emailOrPseudo: this.email,
@@ -50,9 +50,18 @@ export default {
         const userRole = this.parseJwt(token).role;
         const userId = this.parseJwt(token).id;
 
-        this.$cookies.set('jwt', token, { path: '/', maxAge: 60 * 60 });
-        this.$cookies.set('userId', userId, { path: '/', maxAge: 60 * 60 });
-        this.$cookies.set('userRole', userRole, { path: '/', maxAge: 60 * 60 });
+        this.$cookies.set('jwt', token, {
+          path: '/',
+          maxAge: 60 * 60
+        });
+        this.$cookies.set('userId', userId, {
+          path: '/',
+          maxAge: 60 * 60
+        });
+        this.$cookies.set('userRole', userRole, {
+          path: '/',
+          maxAge: 60 * 60
+        });
 
         this.$store.commit('setToken', token);
         this.$store.commit('setUserId', userId);
@@ -61,7 +70,7 @@ export default {
         if (userRole === 'admin') {
           this.$router.push('/admin/adminDashboard');
         } else if (userRole === 'utilisateur') {
-          this.$router.push('/profile');
+          this.$router.push('/utilisateur/dashboard');
         } else if (userRole === 'banni') {
           this.$router.push('/bannissement');
         } else {
@@ -71,7 +80,7 @@ export default {
         this.error = 'Login failed. Please check your credentials and try again.';
       }
     },
-    async requestBetaAccess() {
+    async requestBetaAccess () {
       try {
         const response = await this.$axios.post('/invitations/demandes_invitation', {
           email: this.betaEmail
@@ -86,10 +95,10 @@ export default {
         }
       }
     },
-    parseJwt(token) {
+    parseJwt (token) {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
 

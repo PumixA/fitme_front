@@ -1,3 +1,4 @@
+// store/index.js
 export const state = () => ({
   token: null,
   userId: null,

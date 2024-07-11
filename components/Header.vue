@@ -3,7 +3,11 @@
     <header>
       <nav>
         <ul>
-          <li><nuxt-link to="/profile">Profile</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/dashboard">Dashboard</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/exercices">Exercices</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/profil">Profil</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/seance">Séance</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/statistiques">Statistiques</nuxt-link></li>
           <li><button @click="logout">Logout</button></li>
         </ul>
       </nav>
@@ -14,12 +18,12 @@
 <script>
 export default {
   computed: {
-    isAuthenticated() {
+    isAuthenticated () {
       return !!this.$store.state.token;
     }
   },
   methods: {
-    logout() {
+    logout () {
       this.$store.dispatch('logout');
       this.$router.push('/login');
     }
