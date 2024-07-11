@@ -13,15 +13,15 @@
       </span>
     </div>
     <button @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
-    <div class="exercises">
-      <div v-for="exercice in seance.exercices" :key="exercice._id" class="exercise-item">
+    <draggable v-model="seance.exercices" @end="updateOrder">
+      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id" class="exercise-item">
         <img :src="getImagePath(exercice.id_exercice_custom.photo)" alt="Photo de l'exercice" />
         <div class="exercise-info">
           <h3>{{ exercice.id_exercice_custom.nom }}</h3>
           <p>{{ exercice.id_exercice_custom.id_groupe_musculaire[0].nom }}</p>
         </div>
       </div>
-    </div>
+    </draggable>
 
     <!-- Modal for adding exercise -->
     <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
@@ -55,12 +55,14 @@
 <script>
 import Modal from '~/components/Modal.vue';
 import YoutubePlayer from '~/components/YoutubePlayer.vue';
+import draggable from 'vuedraggable';
 
 export default {
   name: 'GestionSeance',
   components: {
     Modal,
     YoutubePlayer,
+    draggable,
   },
   data() {
     return {
@@ -85,6 +87,11 @@ export default {
       isEditingName: false,
     };
   },
+  computed: {
+    sortedExercices() {
+      return [...this.seance.exercices].sort((a, b) => a.ordre - b.ordre);
+    },
+  },
   methods: {
     fetchSeance() {
       const seanceId = this.$route.query.seanceId;
@@ -92,7 +99,7 @@ export default {
         .get(`${this.backendUrl}/api/seance/getone/${seanceId}`)
         .then((response) => {
           this.seance = response.data.seance;
-          this.seance.exercices = response.data.exercices;
+          this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
         })
         .catch((error) => {
           console.error('Error fetching seance:', error);
@@ -116,9 +123,9 @@ export default {
     updateSeance() {
       const seanceId = this.$route.query.seanceId;
       const data = {
-        exercices: this.seance.exercices.map((ex) => ({
+        exercices: this.seance.exercices.map((ex, index) => ({
           id_exercice_custom: ex.id_exercice_custom._id,
-          ordre: ex.ordre,
+          ordre: index + 1,
         })),
         jour_seance: this.seance.jour_seance,
         nom: this.seance.nom,
@@ -187,6 +194,31 @@ export default {
       const match = url.match(regExp);
       return match && match[2].length === 11 ? match[2] : null;
     },
+    updateOrder(event) {
+      // Update the order of the exercises
+      this.seance.exercices.forEach((ex, index) => {
+        ex.ordre = index + 1;
+      });
+
+      // Send the updated order to the server
+      const data = {
+        exercices: this.seance.exercices.map((ex) => ({
+          id_exercice_custom: ex.id_exercice_custom._id,
+          ordre: ex.ordre,
+        })),
+        jour_seance: this.seance.jour_seance,
+        nom: this.seance.nom,
+      };
+      this.$axios
+        .put(`${this.backendUrl}/api/seance/edit/${this.$route.query.seanceId}`, data)
+        .then(() => {
+          console.log('Order updated successfully');
+          this.fetchSeance();
+        })
+        .catch((error) => {
+          console.error('Error updating exercise order:', error);
+        });
+    },
   },
   mounted() {
     this.fetchSeance();
@@ -195,32 +227,30 @@ export default {
 </script>
 
 <style scoped>
+.days {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
 .days span {
-  cursor: pointer;
-  margin-right: 5px;
-  padding: 5px 10px;
-  border: 1px solid #ccc;
+  padding: 10px;
+  border: 1px solid #ddd;
   border-radius: 5px;
-  user-select: none;
+  cursor: pointer;
 }
 .days span.active {
   background-color: #1abc9c;
-  color: #fff;
-}
-.exercises {
-  margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
+  color: white;
 }
 .exercise-item {
   display: flex;
   align-items: center;
-  padding: 1em;
+  padding: 10px;
   background-color: #f4f4f4;
+  margin-bottom: 10px;
   border: 1px solid #ddd;
+  border-radius: 5px;
   cursor: pointer;
-  width: 200px;
 }
 .exercise-item:hover {
   background-color: #e0e0e0;
@@ -228,21 +258,21 @@ export default {
 .exercise-item img {
   width: 50px;
   height: 50px;
-  margin-right: 1em;
+  margin-right: 10px;
 }
 .exercise-info {
   display: flex;
   flex-direction: column;
 }
 .modal-content {
-  max-height: 90vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 .exercise-image {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  margin-bottom: 1em;
+  margin-bottom: 10px;
 }
 button {
   background-color: #1abc9c;

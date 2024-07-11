@@ -26,7 +26,8 @@
     "vue-qrcode-component": "^2.1.1",
     "vue-server-renderer": "^2.7.10",
     "vue-template-compiler": "^2.7.10",
-    "vue-youtube": "^1.4.0"
+    "vue-youtube": "^1.4.0",
+    "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
