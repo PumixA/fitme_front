@@ -7,7 +7,7 @@
       <button v-for="(day, index) in days" :key="index" @click="filterByDay(index + 1)" :class="{ active: selectedDay === index + 1 }">{{ day }}</button>
     </div>
     <div class="seance-list">
-      <div v-for="seance in filteredSeances" :key="seance._id" class="seance-item">
+      <div v-for="seance in filteredSeances" :key="seance._id" class="seance-item" @click="goToSeance(seance._id)">
         <div class="seance-name">{{ seance.nom }}</div>
         <div class="seance-days">
           <span v-for="day in seance.jour_seance" :key="day">{{ days[day - 1] }}</span>
@@ -80,6 +80,9 @@ export default {
     filterByDay(day) {
       this.selectedDay = day;
     },
+    goToSeance(id) {
+      this.$router.push({ path: '/utilisateur/gestionSeance', query: { seanceId: id } });
+    },
     openCreateModal() {
       this.showCreateModal = true;
     },
@@ -149,6 +152,12 @@ button.active {
   padding: 1em;
   background-color: #f4f4f4;
   border: 1px solid #ddd;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.seance-item:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
 }
 
 .seance-item .seance-name {
