@@ -23,6 +23,7 @@
         <button @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
+    <button @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
 
     <!-- Modal for adding exercise -->
     <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
@@ -210,7 +211,7 @@ export default {
       const match = url.match(regExp);
       return match && match[2].length === 11 ? match[2] : null;
     },
-    updateOrder() {
+    updateOrder(event) {
       this.seance.exercices.forEach((ex, index) => {
         ex.ordre = index + 1;
       });
@@ -238,6 +239,17 @@ export default {
         })
         .catch((error) => {
           console.error('Error deleting exercice:', error);
+        });
+    },
+    deleteSeance() {
+      const seanceId = this.$route.query.seanceId;
+      this.$axios
+        .put(`${this.backendUrl}/api/seance/delete/${seanceId}`)
+        .then(() => {
+          this.$router.push('/utilisateur/seance');
+        })
+        .catch((error) => {
+          console.error('Error deleting seance:', error);
         });
     },
   },
@@ -315,6 +327,17 @@ button:hover {
   cursor: pointer;
 }
 .delete-btn:hover {
+  background-color: darkred;
+}
+.btn-delete-seance {
+  background-color: red;
+  color: white;
+  padding: 0.5em 1em;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+.btn-delete-seance:hover {
   background-color: darkred;
 }
 </style>
