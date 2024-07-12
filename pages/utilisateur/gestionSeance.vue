@@ -64,12 +64,6 @@
         </div>
       </div>
     </Modal>
-
-    <!-- Start/Stop Session Button -->
-    <div class="start-stop-button" @click="toggleSeance">
-      {{ seanceInProgress ? 'Arrêter la séance' : 'Démarrer la séance' }}
-      <span v-if="seanceInProgress">Chrono: {{ chrono }}</span>
-    </div>
   </div>
 </template>
 
@@ -108,9 +102,6 @@ export default {
         { name: 'Dim', number: 7 },
       ],
       isEditingName: false,
-      seanceInProgress: false,
-      chrono: '',
-      chronoInterval: null,
     };
   },
   computed: {
@@ -252,55 +243,7 @@ export default {
         .catch((error) => {
           console.error('Error deleting seance:', error);
         });
-    },
-    toggleSeance() {
-      const seanceId = this.$route.query.seanceId;
-      if (this.seanceInProgress) {
-        // End the seance
-        this.$axios
-          .put(`${this.backendUrl}/api/seance/end/${seanceId}`)
-          .then(() => {
-            this.seanceInProgress = false;
-            clearInterval(this.chronoInterval);
-            this.chrono = '';
-          })
-          .catch((error) => {
-            console.error('Error ending seance:', error);
-          });
-      } else {
-        // Start the seance
-        this.$axios
-          .post(`${this.backendUrl}/api/seance/start/${seanceId}`)
-          .then((response) => {
-            const { statusSeance } = response.data;
-            this.seanceInProgress = true;
-            this.startChrono(statusSeance.id_seance);
-          })
-          .catch((error) => {
-            console.error('Error starting seance:', error);
-          });
-      }
-    },
-    startChrono(id_seance) {
-      this.$axios
-        .get(`${this.backendUrl}/api/seance/getchrono/${id_seance}`)
-        .then((response) => {
-          const { elapsed_time_seconds } = response.data;
-          this.updateChrono(elapsed_time_seconds);
-          this.chronoInterval = setInterval(() => {
-            this.updateChrono(elapsed_time_seconds + Math.floor((Date.now() - new Date(response.data.date_start).getTime()) / 1000));
-          }, 1000);
-        })
-        .catch((error) => {
-          console.error('Error fetching chrono:', error);
-        });
-    },
-    updateChrono(elapsedTime) {
-      const hours = Math.floor(elapsedTime / 3600);
-      const minutes = Math.floor((elapsedTime % 3600) / 60);
-      const seconds = elapsedTime % 60;
-      this.chrono = `${hours > 0 ? `${hours}:` : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    },
+    }
   },
   mounted() {
     this.fetchSeance();
@@ -388,19 +331,5 @@ button:hover {
 }
 .btn-delete-seance:hover {
   background-color: darkred;
-}
-.start-stop-button {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #1abc9c;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.start-stop-button:hover {
-  background-color: #16a085;
 }
 </style>
