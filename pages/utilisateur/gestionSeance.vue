@@ -16,13 +16,13 @@
     </div>
     <button v-if="!isSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
     <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder">
-      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id" class="exercise-item" @click="openExerciceDetails(exercice.id_exercice_custom._id)">
-        <img :src="getImagePath(exercice.id_exercice_custom.photo)" alt="Photo de l'exercice" />
+      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id" class="exercise-item" @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)">
+        <img :src="getImagePath(exercice.id_exercice_custom?.photo || exercice.exercice?.photo)" alt="Photo de l'exercice" />
         <div class="exercise-info">
-          <h3>{{ exercice.id_exercice_custom.nom }}</h3>
-          <p>{{ exercice.id_exercice_custom.id_groupe_musculaire[0].nom }}</p>
+          <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
+          <p>{{ exercice.id_exercice_custom?.id_groupe_musculaire[0]?.nom || exercice.exercice?.id_groupe_musculaire[0]?.nom }}</p>
         </div>
-        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom._id)" class="delete-btn">Supprimer</button>
+        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
     <button v-if="!isSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
@@ -34,7 +34,7 @@
           <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
             <h3>{{ exercice.nom }}</h3>
-            <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
+            <p>{{ exercice.id_groupe_musculaire[0]?.nom }}</p>
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@
       <div v-if="selectedExercice" class="modal-content">
         <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ selectedExercice.nom }}</h3>
-        <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
+        <p>{{ selectedExercice.id_groupe_musculaire[0]?.nom }}</p>
         <p>{{ selectedExercice.description }}</p>
         <div v-if="selectedExercice.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
@@ -67,12 +67,12 @@
       <div v-if="exerciseDetails" class="modal-content">
         <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ exerciseDetails.nom }}</h3>
-        <p>{{ exerciseDetails.id_groupe_musculaire[0].nom }}</p>
+        <p>{{ exerciseDetails.id_groupe_musculaire[0]?.nom }}</p>
         <p>{{ exerciseDetails.description }}</p>
         <div v-if="exerciseDetails.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
         </div>
-        <div>
+        <div v-if="exerciseDetails.nombre_series">
           <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
           <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index">
             <h5>Série {{ index + 1 }}</h5>
@@ -87,7 +87,6 @@
     <SeanceButton />
   </div>
 </template>
-
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -146,10 +145,13 @@ export default {
     async fetchSeance() {
       const seanceId = this.$route.query.seanceId;
       try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
-        this.seance = response.data.seance;
-        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
-        this.checkIfSeanceEnCours(seanceId); // Check if the session is ongoing
+        if (this.isSeanceEnCours) {
+          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
+        } else {
+          const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
+          this.seance = response.data.seance;
+          this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
+        }
       } catch (error) {
         console.error('Error fetching seance:', error);
       }
@@ -159,11 +161,22 @@ export default {
         const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
         if (response.data.id_seance === seanceId) {
           this.isSeanceEnCours = true;
+          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
         } else {
           this.isSeanceEnCours = false;
+          await this.fetchSeance(); // Fetch exercises for the regular session
         }
       } catch (error) {
         console.error('Error checking seance status:', error);
+      }
+    },
+    async fetchSeanceEnCours(seanceId) {
+      try {
+        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/get_exercices/${seanceId}`);
+        this.seance = response.data.seance;
+        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
+      } catch (error) {
+        console.error('Error fetching seance en cours:', error);
       }
     },
     getImagePath(photo) {
@@ -185,7 +198,7 @@ export default {
       const seanceId = this.$route.query.seanceId;
       const data = {
         exercices: this.seance.exercices.map((ex, index) => ({
-          id_exercice_custom: ex.id_exercice_custom._id,
+          id_exercice_custom: ex.id_exercice_custom?._id || ex.exercice?._id,
           ordre: index + 1,
         })),
         jour_seance: this.seance.jour_seance,
@@ -240,14 +253,6 @@ export default {
       this.closeSelectedExerciseModal();
       this.closeAddExerciseModal();
     },
-    makeEditable(event) {
-      if (!this.isSeanceEnCours) {
-        this.isEditingName = true;
-        this.$nextTick(() => {
-          event.target.focus();
-        });
-      }
-    },
     updateSeanceName() {
       this.isEditingName = false;
       this.updateSeance();
@@ -296,12 +301,11 @@ export default {
       return (match && match[2].length === 11) ? match[2] : null;
     },
   },
-  mounted() {
-    this.fetchSeance();
+  async mounted() {
+    await this.checkIfSeanceEnCours(this.$route.query.seanceId);
   },
 };
 </script>
-
 
 <style scoped>
 .seance-en-cours-text {
