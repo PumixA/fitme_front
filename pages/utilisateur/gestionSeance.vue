@@ -50,6 +50,14 @@
         <div v-if="selectedExercice.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
         </div>
+        <div>
+          <h4>Séries: {{ selectedExercice.nombre_series }}</h4>
+          <div v-for="(rep, index) in selectedExercice.nombre_rep" :key="index">
+            <h5>Série {{ index + 1 }}</h5>
+            <p>Reps: {{ rep }} | Poids: {{ selectedExercice.poids[index] }}</p>
+            <hr />
+          </div>
+        </div>
         <button @click="addToSeance">Ajouter à la séance</button>
       </div>
     </Modal>
@@ -64,7 +72,7 @@
         <div v-if="exerciseDetails.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
         </div>
-        <div v-if="isSeanceEnCours && exerciseDetails">
+        <div>
           <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
           <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index">
             <h5>Série {{ index + 1 }}</h5>
@@ -79,6 +87,7 @@
     <SeanceButton />
   </div>
 </template>
+
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -126,6 +135,14 @@ export default {
     },
   },
   methods: {
+    handleDoubleClick(event) {
+      if (!this.isSeanceEnCours) {
+        this.isEditingName = true;
+        this.$nextTick(() => {
+          event.target.focus();
+        });
+      }
+    },
     async fetchSeance() {
       const seanceId = this.$route.query.seanceId;
       try {
@@ -223,14 +240,7 @@ export default {
       this.closeSelectedExerciseModal();
       this.closeAddExerciseModal();
     },
-    handleDoubleClick(event) {
-      console.log('Double click detected');
-      if (!this.isSeanceEnCours) {
-        this.makeEditable(event);
-      }
-    },
     makeEditable(event) {
-      console.log('Making editable:', event);
       if (!this.isSeanceEnCours) {
         this.isEditingName = true;
         this.$nextTick(() => {
@@ -239,11 +249,8 @@ export default {
       }
     },
     updateSeanceName() {
-      console.log('Updating seance name:', this.seance.nom);
-      if (!this.isSeanceEnCours) {
-        this.isEditingName = false;
-        this.updateSeance();
-      }
+      this.isEditingName = false;
+      this.updateSeance();
     },
     updateOrder() {
       this.updateSeance();
@@ -294,6 +301,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .seance-en-cours-text {
@@ -386,3 +394,4 @@ button:hover {
   background-color: darkred;
 }
 </style>
+
