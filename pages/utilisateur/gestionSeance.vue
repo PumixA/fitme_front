@@ -16,7 +16,12 @@
     </div>
     <button v-if="!isSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
     <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder">
-      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id" class="exercise-item" @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)">
+      <div
+        v-for="(exercice, index) in sortedExercices"
+        :key="exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id"
+        :class="['exercise-item', { 'effectue': exercice.status === 'effectue' }]"
+        @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)"
+      >
         <img :src="getImagePath(exercice.id_exercice_custom?.photo || exercice.exercice?.photo)" alt="Photo de l'exercice" />
         <div class="exercise-info">
           <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
@@ -179,6 +184,18 @@ export default {
         console.error('Error fetching seance en cours:', error);
       }
     },
+    async fetchExerciseDetails(seanceId, exerciceId) {
+      try {
+        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
+        this.exerciseDetails = {
+          ...response.data.exerciceCustom,
+          statusExercice: response.data.statusExercice,
+        };
+        this.showExerciseDetailsModal = true;
+      } catch (error) {
+        console.error('Error fetching exercise details:', error);
+      }
+    },
     getImagePath(photo) {
       return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
@@ -261,15 +278,19 @@ export default {
       this.updateSeance();
     },
     openExerciceDetails(exerciceId) {
-      this.$axios
-        .get(`${this.backendUrl}/api/exercice_custom/getone/${exerciceId}`)
-        .then((response) => {
-          this.exerciseDetails = response.data;
-          this.showExerciseDetailsModal = true;
-        })
-        .catch((error) => {
-          console.error('Error fetching exercice details:', error);
-        });
+      if (this.isSeanceEnCours) {
+        this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
+      } else {
+        this.$axios
+          .get(`${this.backendUrl}/api/exercice_custom/getone/${exerciceId}`)
+          .then((response) => {
+            this.exerciseDetails = response.data;
+            this.showExerciseDetailsModal = true;
+          })
+          .catch((error) => {
+            console.error('Error fetching exercice details:', error);
+          });
+      }
     },
     closeExerciseDetailsModal() {
       this.showExerciseDetailsModal = false;
@@ -339,6 +360,9 @@ export default {
   border: 1px solid #ddd;
   cursor: pointer;
   position: relative;
+}
+.exercise-item.effectue {
+  background-color: green;
 }
 .exercise-item:hover {
   background-color: #e0e0e0;
