@@ -1,34 +1,28 @@
 <template>
   <div>
-    <div v-if="isSeanceEnCours" class="seance-en-cours-text">
-      Cette séance est en cours
-    </div>
-    <h1>{{ seance.nom }}</h1>
+    <div v-if="isSeanceEnCours" class="seance-en-cours-text">Cette séance est en cours</div>
+    <h1 @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
+    <input v-if="isEditingName" v-model="seance.nom" @blur="updateSeanceName" @keyup.enter="updateSeanceName" />
     <div class="days">
       <span
         v-for="day in days"
         :key="day.number"
-        :class="{ active: seance.jour_seance && seance.jour_seance.includes(day.number), 'non-editable': isSeanceEnCours }"
-        @click="toggleDay(day.number)"
-        :disabled="isSeanceEnCours"
+        v-if="!isSeanceEnCours || (isSeanceEnCours && seance.jour_seance && seance.jour_seance.includes(day.number))"
+        :class="{ active: seance.jour_seance && seance.jour_seance.includes(day.number), 'non-clickable': isSeanceEnCours }"
+        @click="!isSeanceEnCours && toggleDay(day.number)"
       >
         {{ day.name }}
       </span>
     </div>
     <button v-if="!isSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
     <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder">
-      <div
-        v-for="(exercice, index) in sortedExercices"
-        :key="exercice.exercice?._id || exercice.id_exercice_custom?._id"
-        :class="['exercise-item', { 'effectue': exercice.status === 'effectue' }, { 'non-effectue': exercice.status === 'non_effectue' }]"
-        @click="openExerciceDetails(exercice.exercice?._id || exercice.id_exercice_custom?._id)"
-      >
-        <img :src="getImagePath(exercice.exercice?.photo || exercice.id_exercice_custom?.photo)" alt="Photo de l'exercice" />
+      <div v-for="(exercice, index) in sortedExercices" :key="exercice._id" class="exercise-item" @click="openExerciceDetails(exercice.id_exercice_custom._id)">
+        <img :src="getImagePath(exercice.id_exercice_custom.photo)" alt="Photo de l'exercice" />
         <div class="exercise-info">
-          <h3>{{ exercice.exercice?.nom || exercice.id_exercice_custom?.nom }}</h3>
-          <p>{{ exercice.exercice?.id_groupe_musculaire[0]?.nom || exercice.id_exercice_custom?.id_groupe_musculaire[0]?.nom }}</p>
+          <h3>{{ exercice.id_exercice_custom.nom }}</h3>
+          <p>{{ exercice.id_exercice_custom.id_groupe_musculaire[0].nom }}</p>
         </div>
-        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.exercice?._id || exercice.id_exercice_custom?._id)" class="delete-btn">Supprimer</button>
+        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
     <button v-if="!isSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
@@ -40,7 +34,7 @@
           <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
             <h3>{{ exercice.nom }}</h3>
-            <p>{{ exercice.id_groupe_musculaire[0]?.nom }}</p>
+            <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
           </div>
         </div>
       </div>
@@ -51,11 +45,12 @@
       <div v-if="selectedExercice" class="modal-content">
         <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ selectedExercice.nom }}</h3>
-        <p>{{ selectedExercice.id_groupe_musculaire[0]?.nom }}</p>
+        <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
         <p>{{ selectedExercice.description }}</p>
         <div v-if="selectedExercice.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
         </div>
+        <button @click="addToSeance">Ajouter à la séance</button>
       </div>
     </Modal>
 
@@ -64,13 +59,24 @@
       <div v-if="exerciseDetails" class="modal-content">
         <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ exerciseDetails.nom }}</h3>
-        <p>{{ exerciseDetails.id_groupe_musculaire[0]?.nom }}</p>
+        <p>{{ exerciseDetails.id_groupe_musculaire[0].nom }}</p>
         <p>{{ exerciseDetails.description }}</p>
         <div v-if="exerciseDetails.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
         </div>
+        <div v-if="isSeanceEnCours && exerciseDetails">
+          <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
+          <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index">
+            <h5>Série {{ index + 1 }}</h5>
+            <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
+            <hr />
+          </div>
+        </div>
       </div>
     </Modal>
+
+    <!-- Start/Stop Session Button -->
+    <SeanceButton />
   </div>
 </template>
 
@@ -136,7 +142,6 @@ export default {
         const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
         if (response.data.id_seance === seanceId) {
           this.isSeanceEnCours = true;
-          await this.fetchSeanceEnCours(seanceId);
         } else {
           this.isSeanceEnCours = false;
         }
@@ -144,21 +149,10 @@ export default {
         console.error('Error checking seance status:', error);
       }
     },
-    async fetchSeanceEnCours(seanceId) {
-      try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/get_exercices/${seanceId}`);
-        this.seance = response.data.seance;
-        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
-      } catch (error) {
-        console.error('Error fetching seance en cours:', error);
-      }
-    },
     getImagePath(photo) {
       return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
     toggleDay(day) {
-      if (this.isSeanceEnCours) return;
-
       if (!this.seance.jour_seance) {
         this.seance.jour_seance = [];
       }
@@ -171,12 +165,10 @@ export default {
       this.updateSeance();
     },
     updateSeance() {
-      if (this.isSeanceEnCours) return;
-
       const seanceId = this.$route.query.seanceId;
       const data = {
         exercices: this.seance.exercices.map((ex, index) => ({
-          id_exercice_custom: ex.id_exercice_custom ? ex.id_exercice_custom._id : ex.exercice._id,
+          id_exercice_custom: ex.id_exercice_custom._id,
           ordre: index + 1,
         })),
         jour_seance: this.seance.jour_seance,
@@ -231,17 +223,27 @@ export default {
       this.closeSelectedExerciseModal();
       this.closeAddExerciseModal();
     },
+    handleDoubleClick(event) {
+      console.log('Double click detected');
+      if (!this.isSeanceEnCours) {
+        this.makeEditable(event);
+      }
+    },
     makeEditable(event) {
-      if (this.isSeanceEnCours) return;
-      this.isEditingName = true;
-      this.$nextTick(() => {
-        event.target.focus();
-      });
+      console.log('Making editable:', event);
+      if (!this.isSeanceEnCours) {
+        this.isEditingName = true;
+        this.$nextTick(() => {
+          event.target.focus();
+        });
+      }
     },
     updateSeanceName() {
-      if (this.isSeanceEnCours) return;
-      this.isEditingName = false;
-      this.updateSeance();
+      console.log('Updating seance name:', this.seance.nom);
+      if (!this.isSeanceEnCours) {
+        this.isEditingName = false;
+        this.updateSeance();
+      }
     },
     updateOrder() {
       this.updateSeance();
@@ -313,6 +315,10 @@ export default {
   background-color: #1abc9c;
   color: white;
 }
+.days .non-clickable {
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .exercise-item {
   display: flex;
   align-items: center;
@@ -321,12 +327,6 @@ export default {
   border: 1px solid #ddd;
   cursor: pointer;
   position: relative;
-}
-.exercise-item.effectue {
-  background-color: green;
-}
-.exercise-item.non-effectue {
-  background-color: grey;
 }
 .exercise-item:hover {
   background-color: #e0e0e0;
@@ -359,10 +359,6 @@ button {
 }
 button:hover {
   background-color: #16a085;
-}
-button.non-editable {
-  cursor: not-allowed;
-  background-color: #ccc;
 }
 .delete-btn {
   background-color: red;
