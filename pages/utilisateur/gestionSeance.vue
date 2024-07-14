@@ -64,6 +64,9 @@
         </div>
       </div>
     </Modal>
+
+    <!-- Start/Stop Session Button -->
+    <SeanceButton />
   </div>
 </template>
 
@@ -71,6 +74,7 @@
 import Modal from '~/components/Modal.vue';
 import YoutubePlayer from '~/components/YoutubePlayer.vue';
 import draggable from 'vuedraggable';
+import SeanceButton from '~/components/utilisateur/SeanceButton.vue';
 
 export default {
   name: 'GestionSeance',
@@ -78,6 +82,7 @@ export default {
     Modal,
     YoutubePlayer,
     draggable,
+    SeanceButton,
   },
   data() {
     return {
@@ -243,7 +248,12 @@ export default {
         .catch((error) => {
           console.error('Error deleting seance:', error);
         });
-    }
+    },
+    extractYoutubeVideoId(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    },
   },
   mounted() {
     this.fetchSeance();
