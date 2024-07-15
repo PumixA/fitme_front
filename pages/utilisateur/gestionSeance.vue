@@ -76,6 +76,30 @@
             <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
             <hr />
           </div>
+
+          <div v-if="exerciseDetails.statusExercice.status === 'non_effectue'">
+            <button @click="handleExerciseAction(exerciseDetails._id)">Démarrer l'exercice</button>
+          </div>
+          <div v-else-if="exerciseDetails.statusExercice.status === 'en_cours'">
+            <div v-if="exerciseDetails.statusExercice.numero_serie < exerciseDetails.nombre_series">
+              <div v-if="!exerciseDetails.resting">
+                <p>Chrono: {{ chrono }}</p>
+                <button @click="handleExerciseAction(exerciseDetails._id)">Terminer cette série</button>
+              </div>
+              <div v-else>
+                <p>Repos: {{ restTimeLeft }}s</p>
+                <button @click="handleExerciseAction(exerciseDetails._id)" :disabled="restTimeLeft > 0">
+                  {{ restTimeLeft > 0 ? 'Repos en cours' : 'Repos terminé' }}
+                </button>
+              </div>
+            </div>
+            <div v-else>
+              <button @click="handleExerciseAction(exerciseDetails._id)">Terminer l'exercice</button>
+            </div>
+          </div>
+          <div v-else-if="exerciseDetails.statusExercice.status === 'effectue'">
+            <p>Exercice terminé</p>
+          </div>
         </div>
       </div>
     </Modal>
@@ -177,28 +201,77 @@ export default {
         console.error('Error fetching seance en cours:', error);
       }
     },
+    async handleExerciseAction(exerciceId) {
+      try {
+        await this.$axios.put(`${this.backendUrl}/api/seance/start/do_exercise/edit/${exerciceId}`);
+        this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
+      } catch (error) {
+        console.error('Error handling exercise action:', error);
+      }
+    },
+
     async fetchExerciseDetails(seanceId, exerciceId) {
       try {
         const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
         const { exerciceCustom, statusExercice } = response.data;
 
-        // Compare series and mark completed ones
-        const completedSeries = exerciceCustom.nombre_rep.map((rep, index) => {
-          return statusExercice.nombre_rep[index] === rep &&
-            statusExercice.poids[index] === exerciceCustom.poids[index] &&
-            statusExercice.temps_repos[index] !== undefined;  // Assuming that a non-null temps_repos indicates completion
-        });
+        // Determine if currently resting
+        const isResting = statusExercice.temps_repos.length > statusExercice.numero_serie;
 
         this.exerciseDetails = {
           ...exerciceCustom,
           statusExercice,
-          completedSeries
+          completedSeries: exerciceCustom.nombre_rep.map((rep, index) => {
+            return statusExercice.nombre_rep[index] === rep &&
+              statusExercice.poids[index] === exerciceCustom.poids[index] &&
+              statusExercice.temps_repos[index] !== undefined;
+          }),
+          resting: isResting,
+          restTimeLeft: isResting ? Math.max(statusExercice.temps_repos[statusExercice.numero_serie] - Math.floor((new Date().getTime() - new Date(statusExercice.date_start).getTime()) / 1000), 0) : null,
         };
+
         this.showExerciseDetailsModal = true;
+
+        if (statusExercice.status === 'en_cours' && statusExercice.date_start && !isResting) {
+          this.startChrono(statusExercice.date_start);
+        }
+
+        if (isResting) {
+          this.startRestCountdown();
+        }
       } catch (error) {
         console.error('Error fetching exercise details:', error);
       }
     },
+
+    startChrono(startTime) {
+      const start = new Date(startTime).getTime();
+      const updateChrono = () => {
+        const now = new Date().getTime();
+        const elapsed = Math.floor((now - start) / 1000);
+        this.chrono = elapsed;
+
+        if (this.exerciseDetails.statusExercice.status === 'en_cours' && !this.exerciseDetails.resting) {
+          setTimeout(updateChrono, 1000);
+        }
+      };
+      updateChrono();
+    },
+
+    startRestCountdown() {
+      const updateRestTime = () => {
+        const now = new Date().getTime();
+        const restEndTime = new Date(this.exerciseDetails.statusExercice.temps_repos[this.exerciseDetails.statusExercice.numero_serie]).getTime();
+        const restTimeLeft = Math.max(restEndTime - now, 0) / 1000;
+        this.exerciseDetails.restTimeLeft = Math.floor(restTimeLeft);
+
+        if (restTimeLeft > 0) {
+          setTimeout(updateRestTime, 1000);
+        }
+      };
+      updateRestTime();
+    },
+
     getImagePath(photo) {
       return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
