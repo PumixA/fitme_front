@@ -71,7 +71,7 @@
         </div>
         <div v-if="isSeanceEnCours && exerciseDetails">
           <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
-          <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index">
+          <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index" :class="{ 'completed-series': exerciseDetails.completedSeries[index] }">
             <h5>Série {{ index + 1 }}</h5>
             <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
             <hr />
@@ -80,11 +80,11 @@
       </div>
     </Modal>
 
+
     <!-- Start/Stop Session Button -->
     <SeanceButton />
   </div>
 </template>
-
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -180,9 +180,19 @@ export default {
     async fetchExerciseDetails(seanceId, exerciceId) {
       try {
         const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
+        const { exerciceCustom, statusExercice } = response.data;
+
+        // Compare series and mark completed ones
+        const completedSeries = exerciceCustom.nombre_rep.map((rep, index) => {
+          return statusExercice.nombre_rep[index] === rep &&
+            statusExercice.poids[index] === exerciceCustom.poids[index] &&
+            statusExercice.temps_repos[index] !== undefined;  // Assuming that a non-null temps_repos indicates completion
+        });
+
         this.exerciseDetails = {
-          ...response.data.exerciceCustom,
-          statusExercice: response.data.statusExercice,
+          ...exerciceCustom,
+          statusExercice,
+          completedSeries
         };
         this.showExerciseDetailsModal = true;
       } catch (error) {
@@ -321,7 +331,6 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .seance-en-cours-text {
   color: red;
@@ -415,5 +424,8 @@ button:hover {
 .btn-delete-seance:hover {
   background-color: darkred;
 }
-</style>
 
+.completed-series {
+  background-color: green;
+}
+</style>
