@@ -87,7 +87,7 @@
                 <button @click="handleExerciseAction(exerciseDetails._id)">Terminer cette série</button>
               </div>
               <div v-else>
-                <p>Repos: {{ restTimeLeft }}s</p>
+                <p>Repos: {{ restTimeLeft > 0 ? restTimeLeft : 0 }}s</p>
                 <button @click="handleExerciseAction(exerciseDetails._id)" :disabled="restTimeLeft > 0">
                   {{ restTimeLeft > 0 ? 'Repos en cours' : 'Repos terminé' }}
                 </button>
@@ -173,6 +173,11 @@ export default {
           const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
           this.seance = response.data.seance;
           this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
+
+          // Check for completed status
+          this.seance.exercices.forEach(exercice => {
+            exercice.completed = exercice.status === 'effectue';
+          });
         }
       } catch (error) {
         console.error('Error fetching seance:', error);
@@ -205,6 +210,7 @@ export default {
       try {
         await this.$axios.put(`${this.backendUrl}/api/seance/start/do_exercise/edit/${exerciceId}`);
         this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
+        this.fetchSeance(); // Update the exercise list background color
       } catch (error) {
         console.error('Error handling exercise action:', error);
       }
@@ -500,5 +506,9 @@ button:hover {
 
 .completed-series {
   background-color: green;
+}
+
+.exercise-item.completed-series {
+  background-color: #d4edda; /* Green background for completed series */
 }
 </style>
