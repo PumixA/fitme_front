@@ -18,7 +18,7 @@
     <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder">
       <div
         v-for="(exercice, index) in sortedExercices"
-        :key="exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id"
+        :key="exercice._id"
         :class="['exercise-item', { 'effectue': exercice.status === 'effectue' }]"
         @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)"
       >
@@ -27,7 +27,7 @@
           <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
           <p>{{ exercice.id_exercice_custom?.id_groupe_musculaire[0]?.nom || exercice.exercice?.id_groupe_musculaire[0]?.nom }}</p>
         </div>
-        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice._id || exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
+        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
     <button v-if="!isSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
@@ -39,7 +39,7 @@
           <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
             <h3>{{ exercice.nom }}</h3>
-            <p>{{ exercice.id_groupe_musculaire[0]?.nom }}</p>
+            <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
           </div>
         </div>
       </div>
@@ -50,18 +50,10 @@
       <div v-if="selectedExercice" class="modal-content">
         <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ selectedExercice.nom }}</h3>
-        <p>{{ selectedExercice.id_groupe_musculaire[0]?.nom }}</p>
+        <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
         <p>{{ selectedExercice.description }}</p>
         <div v-if="selectedExercice.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
-        </div>
-        <div>
-          <h4>Séries: {{ selectedExercice.nombre_series }}</h4>
-          <div v-for="(rep, index) in selectedExercice.nombre_rep" :key="index">
-            <h5>Série {{ index + 1 }}</h5>
-            <p>Reps: {{ rep }} | Poids: {{ selectedExercice.poids[index] }}</p>
-            <hr />
-          </div>
         </div>
         <button @click="addToSeance">Ajouter à la séance</button>
       </div>
@@ -77,7 +69,7 @@
         <div v-if="exerciseDetails.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
         </div>
-        <div v-if="exerciseDetails.nombre_series">
+        <div v-if="isSeanceEnCours && exerciseDetails">
           <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
           <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index">
             <h5>Série {{ index + 1 }}</h5>
@@ -92,6 +84,7 @@
     <SeanceButton />
   </div>
 </template>
+
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -327,6 +320,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .seance-en-cours-text {
