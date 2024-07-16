@@ -3,7 +3,7 @@ export default {
   head: {
     title: 'fitme_front',
     htmlAttrs: {
-      lang: 'en'
+      lang: 'fr'
     },
     meta: [
       { charset: 'utf-8' },

@@ -47,23 +47,31 @@ export default {
           password: this.password
         });
         const { token } = response.data;
-        const userRole = this.parseJwt(token).role;
-        const userId = this.parseJwt(token).id;
+        const {
+          id: userId,
+          role: userRole,
+          exp
+        } = this.parseJwt(token);
+
+        const tokenExpiration = exp * 1000; // L'expiration du token en millisecondes
 
         this.$cookies.set('jwt', token, {
           path: '/',
-          maxAge: 60 * 60
+          maxAge: exp - Math.floor(Date.now() / 1000)
         });
         this.$cookies.set('userId', userId, {
           path: '/',
-          maxAge: 60 * 60
+          maxAge: exp - Math.floor(Date.now() / 1000)
         });
         this.$cookies.set('userRole', userRole, {
           path: '/',
-          maxAge: 60 * 60
+          maxAge: exp - Math.floor(Date.now() / 1000)
         });
 
-        this.$store.commit('setToken', token);
+        this.$store.commit('setToken', {
+          token,
+          tokenExpiration
+        });
         this.$store.commit('setUserId', userId);
         this.$store.commit('setUserRole', userRole);
 

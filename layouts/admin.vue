@@ -28,6 +28,19 @@ export default {
     isActive(path) {
       return this.$route.path === path;
     }
+  },
+  mounted() {
+    // Vérifiez régulièrement l'expiration du token
+    this.interval = setInterval(() => {
+      const tokenExpiration = this.$store.state.tokenExpiration;
+      if (tokenExpiration && Date.now() > tokenExpiration) {
+        this.$store.dispatch('logout');
+        this.$router.push('/login');
+      }
+    }, 1000); // Vérifiez toutes les secondes
+  },
+  beforeDestroy() {
+    clearInterval(this.interval);
   }
 }
 </script>

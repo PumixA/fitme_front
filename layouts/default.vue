@@ -16,10 +16,23 @@ export default {
     SeanceButton
   },
   computed: {
-    isUtilisateurPage() {
+    isUtilisateurPage () {
       // Vérifiez si le chemin commence par /utilisateur/
       return this.$route.path.startsWith('/utilisateur/');
     }
+  },
+  mounted () {
+    // Vérifiez régulièrement l'expiration du token
+    this.interval = setInterval(() => {
+      const tokenExpiration = this.$store.state.tokenExpiration;
+      if (tokenExpiration && Date.now() > tokenExpiration) {
+        this.$store.dispatch('logout');
+        this.$router.push('/login');
+      }
+    }, 1000); // Vérifiez toutes les secondes
+  },
+  beforeDestroy () {
+    clearInterval(this.interval);
   }
 }
 </script>
