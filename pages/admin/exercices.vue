@@ -22,39 +22,41 @@
 
     <!-- Modal pour ajouter un exercice -->
     <Modal :visible="showCreateModal" @close="closeCreateModal" title="Ajouter un exercice">
-      <form @submit.prevent="createExercice">
-        <div class="form-group">
-          <label for="nom">Nom de l'exercice</label>
-          <input type="text" v-model="newExercice.nom" required />
-        </div>
-        <div class="form-group">
-          <label for="id_groupe_musculaire">Groupe musculaire</label>
-          <select v-model="newExercice.id_groupe_musculaire" required>
-            <option v-for="group in groupeMusculaires" :value="group._id">{{ group.nom }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="description">Description</label>
-          <textarea v-model="newExercice.description" required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="lien_video">Lien vidéo explicative</label>
-          <input type="text" v-model="newExercice.lien_video" required />
-        </div>
-        <div class="form-group">
-          <img :src="getExerciceImage(newExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal" />
-        </div>
-        <div class="modal-footer">
-          <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
-          <button type="submit" class="btn-primary">Enregistrer</button>
-        </div>
-      </form>
+      <div class="modal-body">
+        <form @submit.prevent="createExercice">
+          <div class="form-group">
+            <label for="nom">Nom de l'exercice</label>
+            <input type="text" v-model="newExercice.nom" required />
+          </div>
+          <div class="form-group">
+            <label for="id_groupe_musculaire">Groupe musculaire</label>
+            <select v-model="newExercice.id_groupe_musculaire" required>
+              <option v-for="group in groupeMusculaires" :value="group._id">{{ group.nom }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea v-model="newExercice.description" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="lien_video">Lien vidéo explicative</label>
+            <input type="text" v-model="newExercice.lien_video" required />
+          </div>
+          <div class="form-group">
+            <img :src="tempImage || getExerciceImage(newExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('create')" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
+            <button type="submit" class="btn-primary">Enregistrer</button>
+          </div>
+        </form>
+      </div>
     </Modal>
 
     <!-- Modal pour éditer un exercice -->
     <Modal :visible="showEditModal" @close="closeEditModal" title="Modifier l'exercice">
-      <div v-if="selectedExercice">
-        <img :src="getExerciceImage(selectedExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal" />
+      <div class="modal-body" v-if="selectedExercice">
+        <img :src="tempImage || getExerciceImage(selectedExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('edit')" />
         <form @submit.prevent="editExercice">
           <div class="form-group">
             <label for="nom">Nom de l'exercice</label>
@@ -84,7 +86,8 @@
 
     <!-- Modal pour changer l'image -->
     <Modal :visible="showImageModal" @close="closeImageModal" title="Changer la photo de l'exercice">
-      <input type="file" @change="handleImageUpload" />
+      <input type="file" @change="handleImageUpload" accept="image/png, image/jpeg" />
+      <div v-if="imageError" class="error">{{ imageError }}</div>
       <div class="modal-footer">
         <button type="button" @click="closeImageModal" class="btn-secondary">Annuler</button>
         <button type="button" @click="confirmImageUpload" class="btn-primary">Enregistrer</button>
@@ -119,8 +122,11 @@ export default {
       },
       selectedExercice: null,
       selectedImage: null,
+      tempImage: null,
+      imageError: '',
       isEditable: false,
-      backendUrl: 'http://localhost:4000' // Direct URL to the backend
+      backendUrl: 'http://localhost:4000', // Direct URL to the backend
+      imageMode: '' // Track whether we're creating or editing
     };
   },
   computed: {
@@ -165,6 +171,8 @@ export default {
         lien_video: '',
         photo: null
       };
+      this.tempImage = null;
+      this.imageError = '';
     },
     createExercice() {
       const formData = new FormData();
@@ -189,6 +197,7 @@ export default {
       this.$axios.get(`${this.backendUrl}/api/admin/exercice/getone/${exercice._id}`)
         .then(response => {
           this.selectedExercice = response.data;
+          this.tempImage = null; // Reset tempImage when editing a new exercise
           this.showEditModal = true;
           this.isEditable = false;
         })
@@ -199,6 +208,8 @@ export default {
     closeEditModal() {
       this.showEditModal = false;
       this.selectedExercice = null;
+      this.tempImage = null;
+      this.imageError = '';
     },
     editExercice() {
       const formData = new FormData();
@@ -219,28 +230,43 @@ export default {
           console.error('Error editing exercise:', error);
         });
     },
-    openImageModal() {
+    openImageModal(mode) {
+      this.imageMode = mode;
       this.showImageModal = true;
     },
     closeImageModal() {
       this.showImageModal = false;
       this.selectedImage = null;
+      this.imageError = '';
     },
     handleImageUpload(event) {
       const file = event.target.files[0];
+      if (!file.type.match('image/png') && !file.type.match('image/jpeg')) {
+        this.imageError = 'Seuls les fichiers PNG et JPG sont autorisés.';
+        return;
+      }
       this.selectedImage = file;
+      this.imageError = '';
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.tempImage = e.target.result;
+      };
+      reader.readAsDataURL(file);
     },
     confirmImageUpload() {
       if (this.selectedImage) {
-        if (this.showCreateModal) {
+        if (this.imageMode === 'create') {
           this.newExercice.photo = this.selectedImage;
-        } else if (this.showEditModal) {
+        } else if (this.imageMode === 'edit') {
           this.selectedExercice.photo = this.selectedImage;
         }
-        this.closeImageModal();
+        this.showImageModal = false; // Only close the image modal, keep the main modal open
       }
     },
     getExerciceImage(exercice) {
+      if (this.tempImage) {
+        return this.tempImage;
+      }
       if (exercice.photo) {
         return `${this.backendUrl}/uploads/exercices/${exercice.photo}`;
       }
@@ -325,5 +351,15 @@ textarea {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.modal-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
 }
 </style>
