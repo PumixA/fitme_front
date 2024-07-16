@@ -43,7 +43,7 @@
             <input type="text" v-model="newExercice.lien_video" required />
           </div>
           <div class="form-group">
-            <img :src="tempImage || getExerciceImage(newExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('create')" />
+            <img :src="getExerciceImage(newExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('create')" />
           </div>
           <div class="modal-footer">
             <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
@@ -56,7 +56,7 @@
     <!-- Modal pour éditer un exercice -->
     <Modal :visible="showEditModal" @close="closeEditModal" title="Modifier l'exercice">
       <div class="modal-body" v-if="selectedExercice">
-        <img :src="tempImage || getExerciceImage(selectedExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('edit')" />
+        <img :src="getExerciceImage(selectedExercice)" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('edit')" />
         <form @submit.prevent="editExercice">
           <div class="form-group">
             <label for="nom">Nom de l'exercice</label>
@@ -197,7 +197,6 @@ export default {
       this.$axios.get(`${this.backendUrl}/api/admin/exercice/getone/${exercice._id}`)
         .then(response => {
           this.selectedExercice = response.data;
-          this.tempImage = null; // Reset tempImage when editing a new exercise
           this.showEditModal = true;
           this.isEditable = false;
         })
@@ -237,6 +236,7 @@ export default {
     closeImageModal() {
       this.showImageModal = false;
       this.selectedImage = null;
+      this.tempImage = null;
       this.imageError = '';
     },
     handleImageUpload(event) {
@@ -260,7 +260,7 @@ export default {
         } else if (this.imageMode === 'edit') {
           this.selectedExercice.photo = this.selectedImage;
         }
-        this.showImageModal = false; // Only close the image modal, keep the main modal open
+        this.closeImageModal();
       }
     },
     getExerciceImage(exercice) {

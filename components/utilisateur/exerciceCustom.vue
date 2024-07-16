@@ -1,12 +1,23 @@
 <template>
   <div>
     <h2>Exercices Personnalisés</h2>
-    <button @click="openCreateModal" class="btn-primary">Ajouter un exercice</button>
-    <div v-for="exercice in exercices" :key="exercice._id" class="exercice-item" @click="openEditModal(exercice)">
-      <img :src="getImageUrl(exercice.photo)" alt="Photo de l'exercice" class="exercise-photo"/>
-      <div>{{ exercice.nom }}</div>
-      <div>{{ exercice.id_groupe_musculaire[0].nom }}</div>
+    <div class="search-filter">
+      <input v-model="searchQuery" placeholder="Rechercher" />
+      <select v-model="selectedGroup">
+        <option value="">Tous les groupes</option>
+        <option v-for="group in uniqueGroups" :key="group" :value="group">{{ group }}</option>
+      </select>
     </div>
+    <div class="exercice-list">
+      <div v-for="exercice in filteredExercices" :key="exercice._id" class="exercice-item" @click="openEditModal(exercice)">
+        <img :src="getImageUrl(exercice.photo)" alt="Photo de l'exercice" />
+        <div class="exercice-info">
+          <h3>{{ exercice.nom }}</h3>
+          <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
+        </div>
+      </div>
+    </div>
+    <button @click="openCreateModal" class="btn-primary">Ajouter un exercice</button>
 
     <Modal :visible="showEditModal" @close="closeEditModal" title="Modifier l'exercice personnalisé">
       <div v-if="selectedExercice" class="modal-content">
@@ -31,22 +42,22 @@
         </div>
         <div class="form-group">
           <label for="nombre_series">Nombre de Séries</label>
-          <input type="number" v-model="selectedExercice.nombre_series" @input="updateSeries" @blur="saveChanges" />
+          <input type="number" min="0" v-model="selectedExercice.nombre_series" @input="updateSeries" @blur="saveChanges" />
         </div>
         <div v-for="(serie, index) in series" :key="index" class="series-group">
           <h3>Série {{ index + 1 }}</h3>
           <div class="form-group">
             <label for="nombre_rep">Nombre de Répétitions</label>
-            <input type="number" v-model="serie.nombre_rep" @blur="saveSeriesChanges" />
+            <input type="number" min="0" v-model="serie.nombre_rep" @blur="saveSeriesChanges" />
           </div>
           <div class="form-group">
             <label for="poids">Poids</label>
-            <input type="number" v-model="serie.poids" @blur="saveSeriesChanges" />
+            <input type="number" min="0" v-model="serie.poids" @blur="saveSeriesChanges" />
           </div>
         </div>
         <div class="form-group">
           <label for="temps_repos">Temps de Repos (secondes)</label>
-          <input type="number" v-model="selectedExercice.temps_repos" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
+          <input type="number" min="0" v-model="selectedExercice.temps_repos" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
         </div>
         <div class="modal-footer">
           <button type="button" @click="closeEditModal" class="btn-secondary">Annuler</button>
@@ -77,26 +88,26 @@
         </div>
         <div class="form-group">
           <label for="nombre_series">Nombre de Séries</label>
-          <input type="number" v-model="newExercice.nombre_series" @input="updateNewSeries" required />
+          <input type="number" min="0" v-model="newExercice.nombre_series" @input="updateNewSeries" required />
         </div>
         <div v-for="(serie, index) in newSeries" :key="index" class="series-group">
           <h3>Série {{ index + 1 }}</h3>
           <div class="form-group">
             <label for="nombre_rep">Nombre de Répétitions</label>
-            <input type="number" v-model="serie.nombre_rep" />
+            <input type="number" min="0" v-model="serie.nombre_rep" />
           </div>
           <div class="form-group">
             <label for="poids">Poids</label>
-            <input type="number" v-model="serie.poids" />
+            <input type="number" min="0" v-model="serie.poids" />
           </div>
         </div>
         <div class="form-group">
           <label for="temps_repos">Temps de Repos (secondes)</label>
-          <input type="number" v-model="newExercice.temps_repos" required />
+          <input type="number" min="0" v-model="newExercice.temps_repos" required />
         </div>
         <div class="form-group">
           <label for="photo">Photo</label>
-          <input type="file" @change="handleNewImageUpload" />
+          <input type="file" accept=".jpg, .jpeg, .png" @change="handleNewImageUpload" />
         </div>
         <div class="modal-footer">
           <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
@@ -107,7 +118,7 @@
 
     <Modal :visible="showImageModal" @close="closeImageModal" title="Changer la photo de l'exercice">
       <form @submit.prevent="uploadImage" class="modal-content">
-        <input type="file" @change="handleImageUpload" />
+        <input type="file" accept=".jpg, .jpeg, .png" @change="handleImageUpload" />
         <div class="modal-footer">
           <button type="button" @click="closeImageModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Enregistrer</button>
@@ -129,6 +140,8 @@ export default {
     return {
       exercices: [],
       groupesMusculaires: [],
+      searchQuery: '',
+      selectedGroup: '',
       showEditModal: false,
       showCreateModal: false,
       showImageModal: false,
@@ -148,6 +161,19 @@ export default {
       series: [],
       newSeries: [{ index: 0, nombre_rep: 10, poids: 0 }]
     };
+  },
+  computed: {
+    filteredExercices() {
+      return this.exercices.filter(exercice => {
+        const matchesSearchQuery = exercice.nom.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesGroup = this.selectedGroup ? exercice.id_groupe_musculaire[0].nom === this.selectedGroup : true;
+        return matchesSearchQuery && matchesGroup;
+      });
+    },
+    uniqueGroups() {
+      const groups = this.exercices.map(exercice => exercice.id_groupe_musculaire[0].nom);
+      return [...new Set(groups)];
+    }
   },
   methods: {
     fetchExercices() {
@@ -216,29 +242,37 @@ export default {
     },
     handleImageUpload(event) {
       const file = event.target.files[0];
-      const formData = new FormData();
-      formData.append('photo', file);
-      formData.append('nom', this.selectedExercice.nom);
-      formData.append('id_groupe_musculaire', this.selectedExercice.id_groupe_musculaire[0]._id);
-      formData.append('description', this.selectedExercice.description);
-      formData.append('lien_video', this.selectedExercice.lien_video);
-      formData.append('nombre_series', this.selectedExercice.nombre_series);
-      formData.append('nombre_rep', JSON.stringify(this.series.map(serie => serie.nombre_rep)));
-      formData.append('poids', JSON.stringify(this.series.map(serie => serie.poids)));
-      formData.append('temps_repos', this.selectedExercice.temps_repos);
+      if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('nom', this.selectedExercice.nom);
+        formData.append('id_groupe_musculaire', this.selectedExercice.id_groupe_musculaire[0]._id);
+        formData.append('description', this.selectedExercice.description);
+        formData.append('lien_video', this.selectedExercice.lien_video);
+        formData.append('nombre_series', this.selectedExercice.nombre_series);
+        formData.append('nombre_rep', JSON.stringify(this.series.map(serie => serie.nombre_rep)));
+        formData.append('poids', JSON.stringify(this.series.map(serie => serie.poids)));
+        formData.append('temps_repos', this.selectedExercice.temps_repos);
 
-      this.$axios.put(`${this.backendUrl}/api/exercice_custom/edit/${this.selectedExercice._id}`, formData)
-        .then(response => {
-          this.selectedExercice.photo = response.data.photo;
-          this.closeImageModal();
-        })
-        .catch(error => {
-          console.error('Error uploading image:', error);
-        });
+        this.$axios.put(`${this.backendUrl}/api/exercice_custom/edit/${this.selectedExercice._id}`, formData)
+          .then(response => {
+            this.selectedExercice.photo = response.data.photo;
+            this.closeImageModal();
+          })
+          .catch(error => {
+            console.error('Error uploading image:', error);
+          });
+      } else {
+        alert('Veuillez sélectionner un fichier JPG ou PNG.');
+      }
     },
     handleNewImageUpload(event) {
       const file = event.target.files[0];
-      this.newExercice.photo = file;
+      if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+        this.newExercice.photo = file;
+      } else {
+        alert('Veuillez sélectionner un fichier JPG ou PNG.');
+      }
     },
     createExercice() {
       const formData = new FormData();
@@ -323,11 +357,68 @@ export default {
 </script>
 
 <style scoped>
+.search-filter {
+  display: flex;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 0.5em;
+}
+
+select {
+  padding: 0.5em;
+}
+
+.exercice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
 .exercice-item {
   display: flex;
   align-items: center;
+  padding: 1em;
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
   cursor: pointer;
+}
+
+.exercice-item:hover {
+  background-color: #e0e0e0;
+}
+
+.exercice-item img {
+  width: 50px;
+  height: 50px;
+  margin-right: 1em;
+}
+
+.exercice-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.exercice-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
   margin-bottom: 1em;
+}
+
+button {
+  background-color: #1abc9c;
+  color: white;
+  padding: 0.5em 1em;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #16a085;
 }
 
 .exercise-photo {

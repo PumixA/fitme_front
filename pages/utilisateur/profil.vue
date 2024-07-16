@@ -18,10 +18,13 @@
           <label>{{ labels[field] }}</label>
           <input
             v-if="field !== 'genre'"
+            :type="isNumberField(field) ? 'number' : 'text'"
             v-model="profile[field]"
             :readonly="!isEditable[field]"
             @dblclick="makeEditable(field)"
             @blur="saveField(field)"
+            :min="isNumberField(field) ? 0 : null"
+            :class="{ 'input-error': isNegativeNumber(profile[field]) }"
           />
           <select
             v-if="field === 'genre'"
@@ -32,6 +35,7 @@
             <option value="femme">Femme</option>
             <option value="autre">Autre</option>
           </select>
+          <span v-if="isNegativeNumber(profile[field])" class="error-message">La valeur ne peut pas être négative.</span>
         </div>
         <div class="form-group">
           <label>IMC</label>
@@ -45,7 +49,8 @@
       <form @submit.prevent="uploadPhoto">
         <div class="form-group">
           <label for="photo">Photo</label>
-          <input type="file" @change="handlePhotoChange" required />
+          <input type="file" @change="handlePhotoChange" accept=".jpg, .jpeg, .png" required />
+          <span v-if="photoError" class="error-message">{{ photoError }}</span>
         </div>
         <div class="modal-footer">
           <button type="button" @click="closePhotoModal" class="btn-secondary">Annuler</button>
@@ -101,6 +106,7 @@ export default {
       imc: '',
       showPhotoModal: false,
       selectedPhoto: null,
+      photoError: '',
       backendUrl: 'http://localhost:4000' // Direct URL to the backend
     };
   },
@@ -137,6 +143,10 @@ export default {
     },
     saveField(key, isSelect = false) {
       if (this.isEditable[key] || isSelect) {
+        if (this.isNegativeNumber(this.profile[key])) {
+          this.showFieldError(key, 'La valeur ne peut pas être négative.');
+          return;
+        }
         const updatedProfile = { ...this.profile };
         this.$axios.put(`${this.backendUrl}/api/users/edit`, updatedProfile)
           .then(() => {
@@ -148,17 +158,32 @@ export default {
           });
       }
     },
+    showFieldError(key, message) {
+      this.$set(this.isEditable, key, false);
+      alert(message);
+    },
     openPhotoModal() {
       this.showPhotoModal = true;
     },
     closePhotoModal() {
       this.showPhotoModal = false;
       this.selectedPhoto = null;
+      this.photoError = '';
     },
     handlePhotoChange(event) {
-      this.selectedPhoto = event.target.files[0];
+      const file = event.target.files[0];
+      if (!file.type.match('image/png') && !file.type.match('image/jpeg')) {
+        this.photoError = 'Seuls les fichiers PNG et JPG sont autorisés.';
+        return;
+      }
+      this.selectedPhoto = file;
+      this.photoError = '';
     },
     uploadPhoto() {
+      if (this.photoError) {
+        return;
+      }
+
       const formData = new FormData();
       formData.append('photo_profil', this.selectedPhoto);
       Object.keys(this.profile).forEach(key => {
@@ -175,6 +200,12 @@ export default {
         .catch(error => {
           console.error('Error uploading photo:', error);
         });
+    },
+    isNegativeNumber(value) {
+      return typeof value === 'number' && value < 0;
+    },
+    isNumberField(field) {
+      return ['age', 'poids', 'taille'].includes(field);
     }
   },
   mounted() {
@@ -227,6 +258,15 @@ export default {
 .form-group input,
 .form-group select {
   padding: 0.5em;
+  margin-top: 0.5em;
+}
+
+.input-error {
+  border-color: red;
+}
+
+.error-message {
+  color: red;
   margin-top: 0.5em;
 }
 </style>
