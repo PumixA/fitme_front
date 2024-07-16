@@ -15,11 +15,17 @@
     <main>
       <nuxt />
     </main>
+    <EmailAssistance />
   </div>
 </template>
 
 <script>
+import EmailAssistance from '~/components/EmailAssistance.vue';
+
 export default {
+  components: {
+    EmailAssistance
+  },
   methods: {
     logout() {
       this.$store.dispatch('logout');

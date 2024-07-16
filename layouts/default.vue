@@ -3,25 +3,26 @@
     <Header />
     <Nuxt />
     <SeanceButton v-if="isUtilisateurPage" />
+    <EmailAssistance />
   </div>
 </template>
 
 <script>
 import Header from '~/components/Header.vue';
 import SeanceButton from '~/components/utilisateur/SeanceButton.vue';
+import EmailAssistance from '~/components/EmailAssistance.vue';
 
 export default {
   components: {
     Header,
-    SeanceButton
+    SeanceButton,
+    EmailAssistance
   },
   computed: {
     isUtilisateurPage () {
+      // Vérifiez si le chemin commence par /utilisateur/
       return this.$route.path.startsWith('/utilisateur/');
     }
-  },
-  created () {
-    console.log('Default layout loaded');
   },
   mounted () {
     // Vérifiez régulièrement l'expiration du token
