@@ -67,6 +67,24 @@ export default {
       addRoute('invitations', '/admin/invitations', resolve(__dirname, 'pages/admin/invitations.vue'));
       addRoute('utilisateurs', '/admin/utilisateurs', resolve(__dirname, 'pages/admin/utilisateurs.vue'));
       addRoute('bannissement', '/bannissement', resolve(__dirname, 'pages/bannissement.vue'));
+
+      // Redirect /admin to /admin/adminDashboard
+      routes.push({
+        path: '/admin',
+        redirect: '/admin/adminDashboard'
+      });
+
+      // Redirect /utilisateur to /utilisateur/dashboard
+      routes.push({
+        path: '/utilisateur',
+        redirect: '/utilisateur/dashboard'
+      });
+
+      // Handle 404
+      routes.push({
+        path: '*',
+        redirect: '/404'
+      });
     }
   },
 

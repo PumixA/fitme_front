@@ -17,9 +17,11 @@ export default {
   },
   computed: {
     isUtilisateurPage () {
-      // Vérifiez si le chemin commence par /utilisateur/
       return this.$route.path.startsWith('/utilisateur/');
     }
+  },
+  created () {
+    console.log('Default layout loaded');
   },
   mounted () {
     // Vérifiez régulièrement l'expiration du token
