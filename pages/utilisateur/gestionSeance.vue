@@ -81,19 +81,23 @@
             <button @click="handleExerciseAction(exerciseDetails._id)">Démarrer l'exercice</button>
           </div>
           <div v-else-if="exerciseDetails.statusExercice.status === 'en_cours'">
-            <div v-if="exerciseDetails.statusExercice.numero_serie < exerciseDetails.nombre_series">
-              <div v-if="!exerciseDetails.resting">
-                <p>Chrono: {{ chrono }}</p>
+            <div v-if="exerciseDetails.statusExercice.numero_serie < exerciseDetails.nombre_series && !exerciseDetails.sameNumberReps">
+              <div v-if="!exerciseDetails.resting && !exerciseDetails.finishedResting">
+                <p>Chrono: {{ formatTime(chrono) }}</p>
                 <button @click="handleExerciseAction(exerciseDetails._id)">Terminer cette série</button>
               </div>
+              <div v-else-if="exerciseDetails.finishedResting">
+                <p>Repos: 0s</p>
+                <button @click="handleExerciseAction(exerciseDetails._id)">Passer à la série suivante</button>
+              </div>
               <div v-else>
-                <p>Repos: {{ restTimeLeft > 0 ? restTimeLeft : 0 }}s</p>
-                <button @click="handleExerciseAction(exerciseDetails._id)" :disabled="restTimeLeft > 0">
-                  {{ restTimeLeft > 0 ? 'Repos en cours' : 'Repos terminé' }}
+                <p>Repos: {{ formatTime(restTimeLeft > 0 ? restTimeLeft : 0) }}</p>
+                <button @click="handleExerciseAction(exerciseDetails._id)">
+                  {{ restTimeLeft > 0 ? 'Repos en cours | Passer à la série suivante' : 'Passer à la série suivante' }}
                 </button>
               </div>
             </div>
-            <div v-else>
+            <div v-else-if="exerciseDetails.sameNumberReps">
               <button @click="handleExerciseAction(exerciseDetails._id)">Terminer l'exercice</button>
             </div>
           </div>
@@ -103,7 +107,6 @@
         </div>
       </div>
     </Modal>
-
 
     <!-- Start/Stop Session Button -->
     <SeanceButton />
@@ -147,7 +150,11 @@ export default {
         { name: 'Dim', number: 7 },
       ],
       isEditingName: false,
-      isSeanceEnCours: false, // New property to track if the current session is ongoing
+      isSeanceEnCours: false,
+      chrono: 0,
+      restTimeLeft: 0,
+      chronoInterval: null,
+      restInterval: null,
     };
   },
   computed: {
@@ -156,64 +163,26 @@ export default {
     },
   },
   methods: {
-    handleDoubleClick(event) {
-      if (!this.isSeanceEnCours) {
-        this.isEditingName = true;
-        this.$nextTick(() => {
-          event.target.focus();
-        });
-      }
-    },
-    async fetchSeance() {
-      const seanceId = this.$route.query.seanceId;
-      try {
-        if (this.isSeanceEnCours) {
-          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
-        } else {
-          const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
-          this.seance = response.data.seance;
-          this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
-
-          // Check for completed status
-          this.seance.exercices.forEach(exercice => {
-            exercice.completed = exercice.status === 'effectue';
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching seance:', error);
-      }
-    },
-    async checkIfSeanceEnCours(seanceId) {
-      try {
-        const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
-        if (response.data.id_seance === seanceId) {
-          this.isSeanceEnCours = true;
-          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
-        } else {
-          this.isSeanceEnCours = false;
-          await this.fetchSeance(); // Fetch exercises for the regular session
-        }
-      } catch (error) {
-        console.error('Error checking seance status:', error);
-      }
-    },
-    async fetchSeanceEnCours(seanceId) {
-      try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/get_exercices/${seanceId}`);
-        this.seance = response.data.seance;
-        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
-      } catch (error) {
-        console.error('Error fetching seance en cours:', error);
-      }
-    },
     async handleExerciseAction(exerciceId) {
       try {
         await this.$axios.put(`${this.backendUrl}/api/seance/start/do_exercise/edit/${exerciceId}`);
-        this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
-        this.fetchSeance(); // Update the exercise list background color
+        await this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
+        await this.fetchSeance(); // Update the exercise list background color
+        this.exerciseDetails.finishedResting = false; // Reset finishedResting when action is handled
       } catch (error) {
         console.error('Error handling exercise action:', error);
       }
+    },
+
+    formatTime(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return [
+        h > 0 ? `${h}h` : null,
+        m > 0 ? `${m}m` : null,
+        `${s}s`
+      ].filter(Boolean).join(' ');
     },
 
     async fetchExerciseDetails(seanceId, exerciceId) {
@@ -221,20 +190,26 @@ export default {
         const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
         const { exerciceCustom, statusExercice } = response.data;
 
-        // Determine if currently resting
         const isResting = statusExercice.temps_repos.length > statusExercice.numero_serie;
+        const sameNumberReps = exerciceCustom.nombre_rep.length === statusExercice.nombre_rep.length;
 
         this.exerciseDetails = {
           ...exerciceCustom,
           statusExercice,
+          temps_repos: exerciceCustom.temps_repos,
           completedSeries: exerciceCustom.nombre_rep.map((rep, index) => {
             return statusExercice.nombre_rep[index] === rep &&
               statusExercice.poids[index] === exerciceCustom.poids[index] &&
               statusExercice.temps_repos[index] !== undefined;
           }),
           resting: isResting,
-          restTimeLeft: isResting ? Math.max(statusExercice.temps_repos[statusExercice.numero_serie] - Math.floor((new Date().getTime() - new Date(statusExercice.date_start).getTime()) / 1000), 0) : null,
+          finishedResting: false,
+          sameNumberReps: sameNumberReps,
+          restTimeLeft: isResting ? Math.max(exerciceCustom.temps_repos - Math.floor((new Date().getTime() - new Date(statusExercice.date_start).getTime()) / 1000), 0) : null,
         };
+
+        console.log('fetchExerciseDetails - isResting:', isResting);
+        console.log('fetchExerciseDetails - sameNumberReps:', sameNumberReps);
 
         this.showExerciseDetailsModal = true;
 
@@ -251,36 +226,101 @@ export default {
     },
 
     startChrono(startTime) {
+      if (this.chronoInterval) {
+        clearInterval(this.chronoInterval);
+      }
       const start = new Date(startTime).getTime();
-      const updateChrono = () => {
+      this.chronoInterval = setInterval(() => {
         const now = new Date().getTime();
         const elapsed = Math.floor((now - start) / 1000);
         this.chrono = elapsed;
-
-        if (this.exerciseDetails.statusExercice.status === 'en_cours' && !this.exerciseDetails.resting) {
-          setTimeout(updateChrono, 1000);
-        }
-      };
-      updateChrono();
+        console.log('startChrono - chrono:', this.chrono);
+      }, 1000);
     },
 
     startRestCountdown() {
-      const updateRestTime = () => {
-        const now = new Date().getTime();
-        const restEndTime = new Date(this.exerciseDetails.statusExercice.temps_repos[this.exerciseDetails.statusExercice.numero_serie]).getTime();
-        const restTimeLeft = Math.max(restEndTime - now, 0) / 1000;
-        this.exerciseDetails.restTimeLeft = Math.floor(restTimeLeft);
+      if (this.restInterval) {
+        clearInterval(this.restInterval);
+      }
+      const restTime = this.exerciseDetails.temps_repos; // Utiliser directement la valeur en secondes
+      this.restTimeLeft = restTime; // Initialise restTimeLeft avec le temps de repos total
 
-        if (restTimeLeft > 0) {
-          setTimeout(updateRestTime, 1000);
+      console.log('startRestCountdown initial:', this.restTimeLeft);
+
+      this.restInterval = setInterval(() => {
+        this.restTimeLeft -= 1;
+        this.exerciseDetails.restTimeLeft = this.restTimeLeft;
+        console.log('startRestCountdown - restTimeLeft:', this.restTimeLeft);
+
+        if (this.restTimeLeft <= 0) { // Bloquer à 0 seconde
+          clearInterval(this.restInterval);
+          this.exerciseDetails.resting = false; // Arrête le repos
+          this.exerciseDetails.finishedResting = true; // Marque la fin du repos
+          this.restTimeLeft = 0; // Bloquer à 0 seconde pour affichage
+          console.log('startRestCountdown - finishedResting:', this.exerciseDetails.finishedResting);
         }
-      };
-      updateRestTime();
+      }, 1000);
+    },
+
+    closeExerciseDetailsModal() {
+      this.showExerciseDetailsModal = false;
+      clearInterval(this.chronoInterval);
+      clearInterval(this.restInterval);
+    },
+
+    handleDoubleClick(event) {
+      if (!this.isSeanceEnCours) {
+        this.isEditingName = true;
+        this.$nextTick(() => {
+          event.target.focus();
+        });
+      }
+    },
+
+    async fetchSeance() {
+      const seanceId = this.$route.query.seanceId;
+      try {
+        if (this.isSeanceEnCours) {
+          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
+        } else {
+          const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
+          this.seance = response.data.seance;
+          this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
+        }
+      } catch (error) {
+        console.error('Error fetching seance:', error);
+      }
+    },
+
+    async checkIfSeanceEnCours(seanceId) {
+      try {
+        const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
+        if (response.data.id_seance === seanceId) {
+          this.isSeanceEnCours = true;
+          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
+        } else {
+          this.isSeanceEnCours = false;
+          await this.fetchSeance(); // Fetch exercises for the regular session
+        }
+      } catch (error) {
+        console.error('Error checking seance status:', error);
+      }
+    },
+
+    async fetchSeanceEnCours(seanceId) {
+      try {
+        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/get_exercices/${seanceId}`);
+        this.seance = response.data.seance;
+        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
+      } catch (error) {
+        console.error('Error fetching seance en cours:', error);
+      }
     },
 
     getImagePath(photo) {
       return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
+
     toggleDay(day) {
       if (!this.seance.jour_seance) {
         this.seance.jour_seance = [];
@@ -293,6 +333,7 @@ export default {
       }
       this.updateSeance();
     },
+
     updateSeance() {
       const seanceId = this.$route.query.seanceId;
       const data = {
@@ -312,13 +353,16 @@ export default {
           console.error('Error updating seance:', error);
         });
     },
+
     openAddExerciseModal() {
       this.fetchAllExercices();
       this.showAddExerciseModal = true;
     },
+
     closeAddExerciseModal() {
       this.showAddExerciseModal = false;
     },
+
     fetchAllExercices() {
       this.$axios
         .get(`${this.backendUrl}/api/exercice_custom/getall`)
@@ -329,6 +373,7 @@ export default {
           console.error('Error fetching all exercices:', error);
         });
     },
+
     selectExercise(exercice) {
       this.$axios
         .get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`)
@@ -340,9 +385,11 @@ export default {
           console.error('Error fetching selected exercice:', error);
         });
     },
+
     closeSelectedExerciseModal() {
       this.showSelectedExerciseModal = false;
     },
+
     addToSeance() {
       this.seance.exercices.push({
         id_exercice_custom: this.selectedExercice,
@@ -352,13 +399,16 @@ export default {
       this.closeSelectedExerciseModal();
       this.closeAddExerciseModal();
     },
+
     updateSeanceName() {
       this.isEditingName = false;
       this.updateSeance();
     },
+
     updateOrder() {
       this.updateSeance();
     },
+
     openExerciceDetails(exerciceId) {
       if (this.isSeanceEnCours) {
         this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
@@ -374,9 +424,13 @@ export default {
           });
       }
     },
+
     closeExerciseDetailsModal() {
       this.showExerciseDetailsModal = false;
+      clearInterval(this.chronoInterval);
+      clearInterval(this.restInterval);
     },
+
     deleteExercice(seanceId, exerciceCustomId) {
       this.$axios
         .put(`${this.backendUrl}/api/seance/deleteExercice/${seanceId}/${exerciceCustomId}`)
@@ -387,6 +441,7 @@ export default {
           console.error('Error deleting exercice:', error);
         });
     },
+
     deleteSeance() {
       const seanceId = this.$route.query.seanceId;
       this.$axios
@@ -398,15 +453,22 @@ export default {
           console.error('Error deleting seance:', error);
         });
     },
+
     extractYoutubeVideoId(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = url.match(regExp);
       return (match && match[2].length === 11) ? match[2] : null;
     },
   },
+
   async mounted() {
     await this.checkIfSeanceEnCours(this.$route.query.seanceId);
   },
+
+
+
+
+
 };
 </script>
 
@@ -503,12 +565,7 @@ button:hover {
 .btn-delete-seance:hover {
   background-color: darkred;
 }
-
 .completed-series {
-  background-color: green;
-}
-
-.exercise-item.completed-series {
-  background-color: #d4edda; /* Green background for completed series */
+  background-color: lightgreen;
 }
 </style>
