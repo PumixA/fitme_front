@@ -17,11 +17,18 @@
       <input type="date" v-model="startDate" @change="fetchStatistics" />
       <input type="date" v-model="endDate" @change="fetchStatistics" />
     </div>
-    <!-- Contenu de la page -->
+    <div v-if="!statistics || Object.keys(statistics).length === 0" class="no-data">
+      Aucune Statistique
+    </div>
+    <div v-else class="chart-container">
+      <canvas ref="chartCanvas"></canvas>
+    </div>
   </div>
 </template>
 
 <script>
+import { Chart } from 'chart.js';
+
 export default {
   middleware: 'auth',
   data() {
@@ -31,6 +38,8 @@ export default {
       selectedFilter: '',
       startDate: '',
       endDate: '',
+      statistics: {},
+      chart: null,
     };
   },
   methods: {
@@ -54,24 +63,80 @@ export default {
           }
         })
           .then(response => {
-            console.log('Statistics response:', response.data);
+            this.statistics = response.data;
+            this.$nextTick(() => {
+              this.renderChart();
+            });
           })
           .catch(error => {
             console.error('Error fetching statistics:', error);
+            this.statistics = {};
           });
       } else {
         console.log('Please select all filters to fetch statistics.');
+        this.statistics = {};
       }
     },
+    renderChart() {
+      if (this.chart) {
+        this.chart.destroy();
+      }
+
+      const ctx = this.$refs.chartCanvas.getContext('2d');
+      const labels = [];
+      const data = [];
+
+      for (const [date, stats] of Object.entries(this.statistics)) {
+        labels.push(new Date(date).toLocaleDateString('fr-FR'));
+        if (this.selectedFilter === 'poids') {
+          data.push(stats.stats.poids.length ? stats.stats.poids.reduce((a, b) => a + b, 0) / stats.stats.poids.length : 0);
+        } else if (this.selectedFilter === 'rep') {
+          data.push(stats.stats.nombre_rep);
+        } else if (this.selectedFilter === 'serie') {
+          data.push(stats.stats.numero_serie);
+        }
+      }
+
+      this.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Statistiques',
+            backgroundColor: '#f87979',
+            borderColor: '#f87979',
+            data: data,
+            fill: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+    }
   },
   mounted() {
     this.fetchExercises();
-  },
+  }
 };
 </script>
 
 <style scoped>
 .filter-container {
   margin-bottom: 2rem;
+}
+
+.no-data {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  margin: 0 auto;
 }
 </style>
