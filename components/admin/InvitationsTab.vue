@@ -35,12 +35,13 @@
       <form @submit.prevent="createInvitation">
         <div class="form-group">
           <label for="email">Email</label>
-          <input type="email" v-model="newInvitation.email" />
+          <input type="email" v-model="newInvitation.email" required />
         </div>
         <div class="form-group">
           <label for="limite_utilisation">Limite d'utilisation</label>
-          <input type="number" v-model="newInvitation.limite_utilisation" required />
+          <input type="number" v-model.number="newInvitation.limite_utilisation" min="0" required />
         </div>
+        <div v-if="createError" class="error">{{ createError }}</div>
         <div class="modal-footer">
           <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Créer</button>
@@ -62,8 +63,9 @@
       <form @submit.prevent="editInvitation">
         <div class="form-group">
           <label for="edit_limite_utilisation">Limite d'utilisation</label>
-          <input type="number" v-model="editInvitationData.limite_utilisation" required />
+          <input type="number" v-model.number="editInvitationData.limite_utilisation" min="0" required />
         </div>
+        <div v-if="editError" class="error">{{ editError }}</div>
         <div class="modal-footer">
           <button type="button" @click="closeEditModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Modifier</button>
@@ -97,7 +99,9 @@ export default {
         limite_utilisation: 1
       },
       registrationLink: '',
-      linkCopied: false // New state for copied link notification
+      linkCopied: false, // New state for copied link notification
+      createError: '', // Error message for create invitation
+      editError: '' // Error message for edit invitation
     }
   },
   computed: {
@@ -113,6 +117,7 @@ export default {
       return new Date(dateString).toLocaleDateString('fr-FR', options);
     },
     createInvitation() {
+      this.createError = '';
       this.$axios.post('/admin/users/inviter', this.newInvitation)
         .then(response => {
           this.closeCreateModal();
@@ -121,10 +126,16 @@ export default {
           this.fetchInvitations(); // Update the invitations table
         })
         .catch(error => {
+          if (error.response && error.response.data && error.response.data.message) {
+            this.createError = error.response.data.message;
+          } else {
+            this.createError = 'Error creating invitation. Please try again.';
+          }
           console.error('Error creating invitation:', error);
         });
     },
     editInvitation() {
+      this.editError = '';
       const { id, limite_utilisation } = this.editInvitationData;
       this.$axios.put(`/admin/users/inviter/edit/${id}`, { limite_utilisation })
         .then(response => {
@@ -132,6 +143,11 @@ export default {
           this.fetchInvitations(); // Update the invitations table
         })
         .catch(error => {
+          if (error.response && error.response.data && error.response.data.message) {
+            this.editError = error.response.data.message;
+          } else {
+            this.editError = 'Error editing invitation. Please try again.';
+          }
           console.error('Error editing invitation:', error);
         });
     },
@@ -177,6 +193,7 @@ export default {
     },
     closeCreateModal() {
       this.showCreateModal = false;
+      this.createError = '';
     },
     closeLinkModal() {
       this.showLinkModal = false;
@@ -185,6 +202,7 @@ export default {
     },
     closeEditModal() {
       this.showEditModal = false;
+      this.editError = '';
       this.editInvitationData = {
         id: null,
         limite_utilisation: 1
@@ -278,6 +296,11 @@ button:hover {
 
 .copy-confirmation {
   color: #1abc9c;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
   margin-top: 10px;
 }
 </style>
