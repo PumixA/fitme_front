@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div v-if="isSeanceEnCours" class="seance-en-cours-text">Cette séance est en cours</div>
     <h1 @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
     <input v-if="isEditingName" v-model="seance.nom" @blur="updateSeanceName" @keyup.enter="updateSeanceName" />
     <div class="days">
@@ -45,9 +44,9 @@
       </div>
     </Modal>
 
-    <!-- Modal for viewing selected exercise -->
-    <Modal :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal" title="Détails de l'exercice">
-      <div v-if="selectedExercice" class="modal-content">
+    <!-- Modal for viewing selected exercise (when session is not started) -->
+    <Modal v-if="!isSeanceEnCours && selectedExercice" :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal" title="Détails de l'exercice">
+      <div class="modal-content">
         <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ selectedExercice.nom }}</h3>
         <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
@@ -55,13 +54,20 @@
         <div v-if="selectedExercice.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
         </div>
-        <button @click="addToSeance">Ajouter à la séance</button>
+        <h4>Séries: {{ selectedExercice.nombre_series }}</h4>
+        <div v-for="(rep, index) in selectedExercice.nombre_rep" :key="index">
+          <h5>Série {{ index + 1 }}</h5>
+          <p>Reps: {{ rep }} | Poids: {{ selectedExercice.poids[index] }}</p>
+          <hr />
+        </div>
+        <p>Temps de repos: {{ formatTime(selectedExercice.temps_repos) }}</p>
+        <button v-if="showAddExerciseModal" @click="addToSeance">Ajouter à la séance</button>
       </div>
     </Modal>
 
-    <!-- Modal for viewing exercise details in session -->
-    <Modal :visible="showExerciseDetailsModal" @close="closeExerciseDetailsModal" title="Détails de l'exercice">
-      <div v-if="exerciseDetails" class="modal-content">
+    <!-- Modal for viewing exercise details in session (when session is started) -->
+    <Modal v-if="isSeanceEnCours && exerciseDetails" :visible="showExerciseDetailsModal" @close="closeExerciseDetailsModal" title="Détails de l'exercice">
+      <div class="modal-content">
         <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ exerciseDetails.nom }}</h3>
         <p>{{ exerciseDetails.id_groupe_musculaire[0]?.nom }}</p>
@@ -69,14 +75,22 @@
         <div v-if="exerciseDetails.lien_video">
           <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
         </div>
-        <div v-if="isSeanceEnCours && exerciseDetails">
-          <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
-          <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index" :class="{ 'completed-series': exerciseDetails.completedSeries[index] }">
-            <h5>Série {{ index + 1 }}</h5>
-            <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
-            <hr />
-          </div>
 
+        <!-- Display series information -->
+        <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
+        <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index" :class="{ 'completed-series': exerciseDetails.completedSeries[index] }">
+          <h5>Série {{ index + 1 }}</h5>
+          <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
+          <hr />
+        </div>
+
+        <!-- Show rest time when session is not started -->
+        <div v-if="!isSeanceEnCours">
+          <p>Temps de repos: {{ formatTime(exerciseDetails.temps_repos) }}</p>
+        </div>
+
+        <!-- Show action buttons when session is started -->
+        <div v-if="isSeanceEnCours">
           <div v-if="exerciseDetails.statusExercice.status === 'non_effectue'">
             <button @click="handleExerciseAction(exerciseDetails._id)">Démarrer l'exercice</button>
           </div>
@@ -112,6 +126,7 @@
     <SeanceButton />
   </div>
 </template>
+
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -222,6 +237,16 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching exercise details:', error);
+      }
+    },
+
+    async selectExercise(exercice) {
+      try {
+        const response = await this.$axios.get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`);
+        this.selectedExercice = response.data;
+        this.showSelectedExerciseModal = true;
+      } catch (error) {
+        console.error('Error fetching selected exercice:', error);
       }
     },
 
@@ -416,8 +441,8 @@ export default {
         this.$axios
           .get(`${this.backendUrl}/api/exercice_custom/getone/${exerciceId}`)
           .then((response) => {
-            this.exerciseDetails = response.data;
-            this.showExerciseDetailsModal = true;
+            this.selectedExercice = response.data;
+            this.showSelectedExerciseModal = true;
           })
           .catch((error) => {
             console.error('Error fetching exercice details:', error);
@@ -465,12 +490,9 @@ export default {
     await this.checkIfSeanceEnCours(this.$route.query.seanceId);
   },
 
-
-
-
-
 };
 </script>
+
 
 <style scoped>
 .seance-en-cours-text {
