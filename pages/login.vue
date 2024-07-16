@@ -85,7 +85,11 @@ export default {
           this.error = 'Role not recognized';
         }
       } catch (error) {
-        this.error = 'Login failed. Please check your credentials and try again.';
+        if (error.response && error.response.data && error.response.data.message) {
+          this.error = error.response.data.message;
+        } else {
+          this.error = 'Login failed. Please check your credentials and try again.';
+        }
       }
     },
     async requestBetaAccess () {

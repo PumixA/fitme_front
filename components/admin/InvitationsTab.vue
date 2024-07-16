@@ -51,7 +51,8 @@
     <!-- Modal for displaying registration link and QR code -->
     <Modal :visible="showLinkModal" @close="closeLinkModal" title="Lien d'invitation">
       <div v-if="registrationLink">
-        <p>{{ registrationLink }}</p>
+        <p @click="copyToClipboard(registrationLink)" class="link">{{ registrationLink }}</p>
+        <div v-if="linkCopied" class="copy-confirmation">Lien copié !</div>
         <div ref="qrcode"></div>
       </div>
     </Modal>
@@ -95,7 +96,8 @@ export default {
         id: null,
         limite_utilisation: 1
       },
-      registrationLink: ''
+      registrationLink: '',
+      linkCopied: false // New state for copied link notification
     }
   },
   computed: {
@@ -145,7 +147,8 @@ export default {
     showRegistrationLink(id) {
       this.$axios.get(`/admin/users/inviter/getone/${id}`)
         .then(response => {
-          this.registrationLink = response.data.registrationLink;
+          const invitation = response.data;
+          this.registrationLink = `http://localhost:3000/register/${invitation.registrationLink.split('/').pop()}`;
           this.showLinkModal = true;
           this.$nextTick(() => {
             this.generateQRCode(this.registrationLink);
@@ -197,6 +200,14 @@ export default {
       if (this.$refs.qrcode) {
         this.$refs.qrcode.innerHTML = '';
       }
+    },
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.linkCopied = true;
+        setTimeout(() => {
+          this.linkCopied = false;
+        }, 3000); // Hide the confirmation after 3 seconds
+      });
     }
   },
   mounted() {
@@ -257,5 +268,16 @@ button:hover {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.link {
+  color: #1abc9c;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.copy-confirmation {
+  color: #1abc9c;
+  margin-top: 10px;
 }
 </style>

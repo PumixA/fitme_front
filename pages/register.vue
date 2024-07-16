@@ -60,7 +60,11 @@ export default {
         });
         this.$router.push('/login');
       } catch (error) {
-        this.error = 'Registration failed. Please try again.';
+        if (error.response && error.response.data && error.response.data.message) {
+          this.error = error.response.data.message;
+        } else {
+          this.error = 'Registration failed. Please try again.';
+        }
       }
     }
   }
