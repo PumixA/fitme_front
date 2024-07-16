@@ -13,8 +13,10 @@
   },
   "dependencies": {
     "@nuxtjs/axios": "^5.13.6",
+    "apexcharts": "^3.50.0",
     "bootstrap": "^4.6.2",
     "bootstrap-vue": "^2.22.0",
+    "chart.js": "^2.9.4",
     "cookie-universal-nuxt": "^2.2.2",
     "core-js": "^3.25.3",
     "nuxt": "^2.15.8",
@@ -22,6 +24,8 @@
     "qrcode.vue": "^3.4.1",
     "video.js": "^8.16.1",
     "vue": "^2.7.10",
+    "vue-apexcharts": "^1.6.2",
+    "vue-chartjs": "^3.5.1",
     "vue-qrcode": "^2.2.2",
     "vue-qrcode-component": "^2.1.1",
     "vue-server-renderer": "^2.7.10",
@@ -30,11 +34,14 @@
     "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.12.3",
     "@babel/eslint-parser": "^7.19.1",
+    "@babel/preset-env": "^7.12.1",
     "@nuxt/types": "^2.15.8",
     "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config-typescript": "^11.0.0",
     "@nuxtjs/eslint-module": "^3.1.0",
+    "babel-loader": "^8.1.0",
     "eslint": "^8.24.0",
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-vue": "^9.5.1"
