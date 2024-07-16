@@ -9,6 +9,11 @@ export default function ({ store, redirect, route }) {
     return redirect('/login');
   }
 
+  // Vérifiez si l'utilisateur est banni
+  if (isAuthenticated && userRole === 'banni' && route.name !== 'bannissement') {
+    return redirect('/bannissement');
+  }
+
   if (!isAuthenticated && !['login', 'register', 'register-token'].includes(route.name)) {
     return redirect('/login');
   }
@@ -36,9 +41,5 @@ export default function ({ store, redirect, route }) {
 
   if (route.name && route.name.startsWith('utilisateur') && userRole !== 'utilisateur') {
     return redirect('/admin/adminDashboard');
-  }
-
-  if (route.name === 'profile' && userRole === 'banni') {
-    return redirect('/bannissement');
   }
 }

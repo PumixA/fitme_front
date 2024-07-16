@@ -1,7 +1,7 @@
 <template>
   <div class="erreur-layout">
-    <Header v-if="isUtilisateurPage" />
-    <div v-else-if="isAdminPage" class="admin-layout">
+    <Header v-if="isUtilisateurPage && !isBanni" />
+    <div v-else-if="isAdminPage && !isBanni" class="admin-layout">
       <aside class="sidebar">
         <nav>
           <ul>
@@ -50,6 +50,15 @@ export default {
         const decodedToken = this.parseJwt(token);
         console.log('Decoded JWT for admin:', decodedToken);
         return decodedToken.role === 'admin';
+      }
+      return false;
+    },
+    isBanni() {
+      const token = this.$store.state.token;
+      if (token) {
+        const decodedToken = this.parseJwt(token);
+        console.log('Decoded JWT for banni:', decodedToken);
+        return decodedToken.role === 'banni';
       }
       return false;
     }
