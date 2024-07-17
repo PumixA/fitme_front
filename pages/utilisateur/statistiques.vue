@@ -79,11 +79,10 @@ export default {
             }
           })
           .catch(error => {
-            console.error('Error fetching statistics:', error);
+            /* console.error('Error fetching statistics:', error); */
             this.statistics = {};
           });
       } else {
-        console.log('Please select all filters to fetch statistics.');
         this.statistics = {};
       }
     },

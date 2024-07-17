@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+:root {
+  --policeTitre: "Lato", sans-serif;
+  --policeContenu: "Rubik", sans-serif;
+
+
+  --tailleTitre: 20px;
+  --tailleSousTitre: 15px;
+  --tailleContenu: 12px;
+  --tailleSpan: 10px;
+
+
+  --couleurPrincipale-1: #FF5722;
+  --couleurPrincipale-2: #FF9800;
+
+  --couleurSecondaire-1: #4A4A4A;
+  --couleurSecondaire-2: #FFFFFF;
+  --couleurSecondaire-3: #FFE0B2;
+  --couleurSecondaire-4: #FFEACA;
+
+  --couleurAccent-1: #81C784;
+  --couleurAccent-2: #000000;
+
+  --couleurAdditionnelle-1: #B0BEC5;
+  --couleurAdditionnelle-2: #FAFAFA;
+  --couleurAdditionnelle-3: #E0E0E0;
+
+
+  --couleurErreur: #d55151;
+}
+
+body {
+  font-family: var(--policeContenu);
+}

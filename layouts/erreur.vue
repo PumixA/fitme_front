@@ -34,15 +34,11 @@ export default {
     Header,
     EmailAssistance
   },
-  created() {
-    console.log('Erreur layout loaded');
-  },
   computed: {
     isUtilisateurPage() {
       const token = this.$store.state.token;
       if (token) {
         const decodedToken = this.parseJwt(token);
-        console.log('Decoded JWT for utilisateur:', decodedToken);
         return decodedToken.role === 'utilisateur';
       }
       return false;
@@ -51,7 +47,6 @@ export default {
       const token = this.$store.state.token;
       if (token) {
         const decodedToken = this.parseJwt(token);
-        console.log('Decoded JWT for admin:', decodedToken);
         return decodedToken.role === 'admin';
       }
       return false;
@@ -70,7 +65,6 @@ export default {
       }).join(''));
 
       const decoded = JSON.parse(jsonPayload);
-      console.log('Decoded JWT:', decoded);
       return decoded;
     }
   }

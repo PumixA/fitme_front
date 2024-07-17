@@ -1,26 +1,26 @@
 <template>
-  <div class="email-assistance">
-    <a href="mailto:fitme-assistance@gmail.com">fitme-assistance@gmail.com</a>
-  </div>
+    <a class="email-assistance" href="mailto:fitme-assistance@gmail.com">fitme-assistance@gmail.com</a>
 </template>
 
 <style scoped>
 .email-assistance {
+  color: var(--couleurSecondaire-1);
+  text-decoration: none;
+  display: block;
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #f0f0f0;
+  background-color: var(--couleurSecondaire-3);
   padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  font-size: var(--tailleContenu);
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
-.email-assistance a {
-  color: #007bff;
-  text-decoration: none;
+.email-assistance:hover {
+  background-color: var(--couleurSecondaire-4);
 }
 
-.email-assistance a:hover {
-  text-decoration: underline;
-}
+
 </style>

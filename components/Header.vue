@@ -43,9 +43,11 @@ export default {
 
 <style scoped>
 header {
+  border-radius: 50px;
+  margin: 20px;
   background: #333;
   color: white;
-  padding: 1em;
+  padding: 10px;
 }
 
 nav ul {

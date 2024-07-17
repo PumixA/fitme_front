@@ -8,11 +8,7 @@
 
 <script>
 export default {
-  layout: 'erreur',
-  created() {
-    console.log('404 page loaded');
-    console.log('Current layout:', this.$options.layout);
-  }
+  layout: 'erreur'
 }
 </script>
 

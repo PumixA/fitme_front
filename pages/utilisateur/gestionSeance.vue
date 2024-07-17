@@ -224,8 +224,6 @@ export default {
           restTimeLeft: isResting ? Math.max(exerciceCustom.temps_repos - Math.floor((new Date().getTime() - new Date(statusExercice.date_start).getTime()) / 1000), 0) : null,
         };
 
-        console.log('fetchExerciseDetails - isResting:', isResting);
-        console.log('fetchExerciseDetails - sameNumberReps:', sameNumberReps);
 
         this.showExerciseDetailsModal = true;
 
@@ -260,7 +258,6 @@ export default {
         const now = new Date().getTime();
         const elapsed = Math.floor((now - start) / 1000);
         this.chrono = elapsed;
-        console.log('startChrono - chrono:', this.chrono);
       }, 1000);
     },
 
@@ -271,19 +268,16 @@ export default {
       const restTime = this.exerciseDetails.temps_repos; // Utiliser directement la valeur en secondes
       this.restTimeLeft = restTime; // Initialise restTimeLeft avec le temps de repos total
 
-      console.log('startRestCountdown initial:', this.restTimeLeft);
 
       this.restInterval = setInterval(() => {
         this.restTimeLeft -= 1;
         this.exerciseDetails.restTimeLeft = this.restTimeLeft;
-        console.log('startRestCountdown - restTimeLeft:', this.restTimeLeft);
 
         if (this.restTimeLeft <= 0) { // Bloquer à 0 seconde
           clearInterval(this.restInterval);
           this.exerciseDetails.resting = false; // Arrête le repos
           this.exerciseDetails.finishedResting = true; // Marque la fin du repos
           this.restTimeLeft = 0; // Bloquer à 0 seconde pour affichage
-          console.log('startRestCountdown - finishedResting:', this.exerciseDetails.finishedResting);
         }
       }, 1000);
     },

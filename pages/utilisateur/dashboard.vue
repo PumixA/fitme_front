@@ -92,7 +92,7 @@ export default {
       const sessionId = this.sessions[0]._id; // Assuming there's only one session for the day
       this.$axios.post(`/seance/start/${sessionId}`)
         .then(response => {
-          console.log('Session started:', response.data);
+          /* console.log('Session started:', response.data); */
           this.$router.push(`/utilisateur/gestionSeance?seanceId=${sessionId}`);
         })
         .catch(error => {
