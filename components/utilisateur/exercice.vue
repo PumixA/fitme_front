@@ -19,15 +19,17 @@
     </div>
 
     <Modal :visible="showModal" @close="closeModal" title="Détails de l'exercice">
-      <div v-if="selectedExercice">
-        <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercice-image" />
-        <h3>{{ selectedExercice.nom }}</h3>
-        <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
-        <p>{{ selectedExercice.description }}</p>
-        <div v-if="selectedExercice.lien_video">
-          <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
+      <div class="modal-content-scrollable">
+        <div v-if="selectedExercice">
+          <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercice-image" />
+          <h3>{{ selectedExercice.nom }}</h3>
+          <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
+          <p>{{ selectedExercice.description }}</p>
+          <div v-if="selectedExercice.lien_video">
+            <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
+          </div>
+          <button @click="addToMyExercices">Ajouter à mes exercices</button>
         </div>
-        <button @click="addToMyExercices">Ajouter à mes exercices</button>
       </div>
     </Modal>
   </div>
@@ -179,5 +181,10 @@ button {
 
 button:hover {
   background-color: #16a085;
+}
+
+.modal-content-scrollable {
+  max-height: 70vh; /* Adjust the height as needed */
+  overflow-y: auto;
 }
 </style>
