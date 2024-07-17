@@ -17,7 +17,7 @@
       <input type="date" v-model="startDate" @change="fetchStatistics" />
       <input type="date" v-model="endDate" @change="fetchStatistics" />
     </div>
-    <div v-if="!statistics || Object.keys(statistics).length === 0" class="no-data">
+    <div v-if="!statistics || Object.keys(statistics).length === 0 || isStatisticsEmpty" class="no-data">
       Aucune Statistique
     </div>
     <div v-else class="chart-container">
@@ -42,6 +42,12 @@ export default {
       chart: null,
     };
   },
+  computed: {
+    isStatisticsEmpty() {
+      // Check if any statistics array is empty
+      return Object.keys(this.statistics).length === 0;
+    },
+  },
   methods: {
     fetchExercises() {
       this.$axios.get('/exercice_custom/getall')
@@ -64,9 +70,13 @@ export default {
         })
           .then(response => {
             this.statistics = response.data;
-            this.$nextTick(() => {
-              this.renderChart();
-            });
+            if (Object.keys(this.statistics).length === 0) {
+              this.statistics = {}; // Handle empty response
+            } else {
+              this.$nextTick(() => {
+                this.renderChart();
+              });
+            }
           })
           .catch(error => {
             console.error('Error fetching statistics:', error);
@@ -82,7 +92,11 @@ export default {
         this.chart.destroy();
       }
 
-      const ctx = this.$refs.chartCanvas.getContext('2d');
+      const ctx = this.$refs.chartCanvas;
+      if (!ctx) {
+        return;
+      }
+
       const labels = [];
       const data = [];
 
@@ -139,4 +153,10 @@ export default {
   height: 400px;
   margin: 0 auto;
 }
+
+.chart-container canvas {
+  width: 100% !important;
+  height: auto !important;
+}
 </style>
+
