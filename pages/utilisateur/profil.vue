@@ -20,7 +20,7 @@
             v-if="field !== 'genre'"
             :type="isNumberField(field) ? 'number' : 'text'"
             v-model="profile[field]"
-            :readonly="!isEditable[field]"
+            :readonly="!isEditable[field] || isSessionActive"
             @dblclick="makeEditable(field)"
             @blur="saveField(field)"
             :min="isNumberField(field) ? 0 : null"
@@ -30,6 +30,7 @@
             v-if="field === 'genre'"
             v-model="profile.genre"
             @change="saveField(field, true)"
+            :disabled="isSessionActive"
           >
             <option value="homme">Homme</option>
             <option value="femme">Femme</option>
@@ -107,7 +108,8 @@ export default {
       showPhotoModal: false,
       selectedPhoto: null,
       photoError: '',
-      backendUrl: 'http://localhost:4000' // Direct URL to the backend
+      backendUrl: 'http://localhost:4000', // Direct URL to the backend
+      seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     };
   },
   computed: {
@@ -115,6 +117,9 @@ export default {
       return this.profile.photo_profil
         ? `${this.backendUrl}/uploads/users/${this.profile.photo_profil}`
         : '/images/photodeprofil.png';
+    },
+    isSessionActive() {
+      return this.seanceStatus.id_status_seance !== null || this.seanceStatus.id_seance !== null;
     }
   },
   methods: {
@@ -139,10 +144,12 @@ export default {
       return new Date(dateString).toLocaleDateString('fr-FR', options);
     },
     makeEditable(key) {
-      this.$set(this.isEditable, key, true);
+      if (!this.isSessionActive) {
+        this.$set(this.isEditable, key, true);
+      }
     },
     saveField(key, isSelect = false) {
-      if (this.isEditable[key] || isSelect) {
+      if ((this.isEditable[key] || isSelect) && !this.isSessionActive) {
         if (this.isNegativeNumber(this.profile[key])) {
           this.showFieldError(key, 'La valeur ne peut pas être négative.');
           return;
@@ -163,7 +170,9 @@ export default {
       alert(message);
     },
     openPhotoModal() {
-      this.showPhotoModal = true;
+      if (!this.isSessionActive) {
+        this.showPhotoModal = true;
+      }
     },
     closePhotoModal() {
       this.showPhotoModal = false;
@@ -206,10 +215,20 @@ export default {
     },
     isNumberField(field) {
       return ['age', 'poids', 'taille'].includes(field);
+    },
+    checkSeanceStatus() {
+      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+        .then(response => {
+          this.seanceStatus = response.data;
+        })
+        .catch(error => {
+          console.error('Error checking seance status:', error);
+        });
     }
   },
   mounted() {
     this.fetchProfile();
+    this.checkSeanceStatus(); // Check seance status on mount
   }
 }
 </script>
