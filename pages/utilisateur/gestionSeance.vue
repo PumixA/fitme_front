@@ -1,20 +1,20 @@
 <template>
   <div>
-    <h1 @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
+    <h1 :class="{ 'non-clickable': isSeanceEnCours || isAnotherSeanceEnCours }" @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
     <input v-if="isEditingName" v-model="seance.nom" @blur="updateSeanceName" @keyup.enter="updateSeanceName" />
     <div class="days">
       <span
         v-for="day in days"
         :key="day.number"
         v-if="!isSeanceEnCours || (isSeanceEnCours && seance.jour_seance && seance.jour_seance.includes(day.number))"
-        :class="{ active: seance.jour_seance && seance.jour_seance.includes(day.number), 'non-clickable': isSeanceEnCours }"
-        @click="!isSeanceEnCours && toggleDay(day.number)"
+        :class="{ active: seance.jour_seance && seance.jour_seance.includes(day.number), 'non-clickable': isSeanceEnCours || isAnotherSeanceEnCours }"
+        @click="!isSeanceEnCours && !isAnotherSeanceEnCours && toggleDay(day.number)"
       >
         {{ day.name }}
       </span>
     </div>
-    <button v-if="!isSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
-    <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder" class="exercise-list">
+    <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
+    <draggable v-model="seance.exercices" :disabled="isSeanceEnCours || isAnotherSeanceEnCours" @end="updateOrder" class="exercise-list">
       <div
         v-for="(exercice, index) in sortedExercices"
         :key="exercice._id"
@@ -26,10 +26,10 @@
           <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
           <p>{{ exercice.id_exercice_custom?.id_groupe_musculaire[0]?.nom || exercice.exercice?.id_groupe_musculaire[0]?.nom }}</p>
         </div>
-        <button v-if="!isSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
+        <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
       </div>
     </draggable>
-    <button v-if="!isSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
+    <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
 
     <!-- Modal for adding exercise -->
     <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
@@ -45,7 +45,7 @@
     </Modal>
 
     <!-- Modal for viewing selected exercise (when session is not started) -->
-    <Modal v-if="!isSeanceEnCours && selectedExercice" :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal" title="Détails de l'exercice">
+    <Modal v-if="!isSeanceEnCours && !isAnotherSeanceEnCours && selectedExercice" :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal" title="Détails de l'exercice">
       <div class="modal-content">
         <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
         <h3>{{ selectedExercice.nom }}</h3>
@@ -144,6 +144,7 @@ export default {
   data() {
     return {
       seance: {
+        nom: '',
         jour_seance: [],
         exercices: [],
       },
@@ -165,6 +166,7 @@ export default {
       ],
       isEditingName: false,
       isSeanceEnCours: false,
+      isAnotherSeanceEnCours: false,
       chrono: 0,
       restTimeLeft: 0,
       chronoInterval: null,
@@ -293,7 +295,7 @@ export default {
     },
 
     handleDoubleClick(event) {
-      if (!this.isSeanceEnCours) {
+      if (!this.isSeanceEnCours && !this.isAnotherSeanceEnCours) {
         this.isEditingName = true;
         this.$nextTick(() => {
           event.target.focus();
@@ -304,13 +306,9 @@ export default {
     async fetchSeance() {
       const seanceId = this.$route.query.seanceId;
       try {
-        if (this.isSeanceEnCours) {
-          await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
-        } else {
-          const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
-          this.seance = response.data.seance;
-          this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
-        }
+        const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
+        this.seance = response.data.seance;
+        this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
       } catch (error) {
         console.error('Error fetching seance:', error);
       }
@@ -322,8 +320,12 @@ export default {
         if (response.data.id_seance === seanceId) {
           this.isSeanceEnCours = true;
           await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
+        } else if (response.data.id_seance !== null && response.data.id_status_seance !== null) {
+          this.isAnotherSeanceEnCours = true;
+          await this.fetchSeance(); // Fetch exercises for the regular session
         } else {
           this.isSeanceEnCours = false;
+          this.isAnotherSeanceEnCours = false;
           await this.fetchSeance(); // Fetch exercises for the regular session
         }
       } catch (error) {
@@ -489,6 +491,9 @@ export default {
     await this.checkIfSeanceEnCours(this.$route.query.seanceId);
   },
 
+  watch: {
+    '$route.query.seanceId': 'checkIfSeanceEnCours'
+  }
 };
 </script>
 
@@ -516,10 +521,8 @@ export default {
   cursor: not-allowed;
   pointer-events: none;
 }
-.exercise-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.non-clickable {
+  pointer-events: none;
 }
 .exercise-item {
   display: flex;
@@ -529,8 +532,7 @@ export default {
   border: 1px solid #ddd;
   cursor: pointer;
   position: relative;
-  width: calc(25% - 20px); /* Adjust the width to fit four items per row */
-  box-sizing: border-box;
+  width: 24%;
 }
 .exercise-item.effectue {
   background-color: green;
@@ -546,6 +548,11 @@ export default {
 .exercise-info {
   display: flex;
   flex-direction: column;
+}
+.exercise-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .modal-content {
   max-height: 70vh;
