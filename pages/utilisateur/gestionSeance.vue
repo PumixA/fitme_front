@@ -33,7 +33,7 @@
 
     <!-- Modal for adding exercise -->
     <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
-      <div class="modal-content exercise-list">
+      <div class="modal-content">
         <div v-for="exercice in allExercices" :key="exercice._id" class="exercise-item" @click="selectExercise(exercice)">
           <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
@@ -516,6 +516,11 @@ export default {
   cursor: not-allowed;
   pointer-events: none;
 }
+.exercise-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .exercise-item {
   display: flex;
   align-items: center;
@@ -524,6 +529,8 @@ export default {
   border: 1px solid #ddd;
   cursor: pointer;
   position: relative;
+  width: calc(25% - 20px); /* Adjust the width to fit four items per row */
+  box-sizing: border-box;
 }
 .exercise-item.effectue {
   background-color: green;
@@ -539,11 +546,6 @@ export default {
 .exercise-info {
   display: flex;
   flex-direction: column;
-}
-.exercise-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 .modal-content {
   max-height: 70vh;
