@@ -14,7 +14,7 @@
         </div>
       </div>
     </div>
-    <button @click="openCreateModal" class="add-seance-btn">+</button>
+    <button v-if="!isSessionActive" @click="openCreateModal" class="add-seance-btn">+</button>
 
     <Modal :visible="showCreateModal" @close="closeCreateModal" title="Ajouter une séance">
       <form @submit.prevent="createSeance" class="modal-content">
@@ -55,7 +55,8 @@ export default {
       newSeance: {
         nom: '',
         jour_seance: []
-      }
+      },
+      seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     };
   },
   computed: {
@@ -65,6 +66,9 @@ export default {
         const matchesDay = this.selectedDay !== null ? seance.jour_seance.includes(this.selectedDay) : true;
         return matchesSearchQuery && matchesDay;
       });
+    },
+    isSessionActive() {
+      return this.seanceStatus.id_status_seance !== null || this.seanceStatus.id_seance !== null;
     }
   },
   methods: {
@@ -77,6 +81,15 @@ export default {
           console.error('Error fetching seances:', error);
         });
     },
+    checkSeanceStatus() {
+      this.$axios.get('http://localhost:4000/api/users/checkseance')
+        .then(response => {
+          this.seanceStatus = response.data;
+        })
+        .catch(error => {
+          console.error('Error checking seance status:', error);
+        });
+    },
     filterByDay(day) {
       this.selectedDay = day;
     },
@@ -84,7 +97,9 @@ export default {
       this.$router.push({ path: '/utilisateur/gestionSeance', query: { seanceId: id } });
     },
     openCreateModal() {
-      this.showCreateModal = true;
+      if (!this.isSessionActive) {
+        this.showCreateModal = true;
+      }
     },
     closeCreateModal() {
       this.showCreateModal = false;
@@ -114,6 +129,7 @@ export default {
   },
   mounted() {
     this.fetchSeances();
+    this.checkSeanceStatus(); // Check seance status on mount
   }
 }
 </script>

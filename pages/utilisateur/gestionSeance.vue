@@ -14,7 +14,7 @@
       </span>
     </div>
     <button v-if="!isSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
-    <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder">
+    <draggable v-model="seance.exercices" :disabled="isSeanceEnCours" @end="updateOrder" class="exercise-list">
       <div
         v-for="(exercice, index) in sortedExercices"
         :key="exercice._id"
@@ -33,7 +33,7 @@
 
     <!-- Modal for adding exercise -->
     <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
-      <div class="modal-content">
+      <div class="modal-content exercise-list">
         <div v-for="exercice in allExercices" :key="exercice._id" class="exercise-item" @click="selectExercise(exercice)">
           <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
@@ -126,7 +126,6 @@
     <SeanceButton />
   </div>
 </template>
-
 
 <script>
 import Modal from '~/components/Modal.vue';
@@ -493,7 +492,6 @@ export default {
 };
 </script>
 
-
 <style scoped>
 .seance-en-cours-text {
   color: red;
@@ -541,6 +539,11 @@ export default {
 .exercise-info {
   display: flex;
   flex-direction: column;
+}
+.exercise-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .modal-content {
   max-height: 70vh;
