@@ -53,6 +53,7 @@ export default {
         'faLock',
         'faHouse',
         'faRightFromBracket',
+        'faPlay',
       ],
       regular: [
         'faUser',

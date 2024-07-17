@@ -3,8 +3,6 @@
     <header>
       <nuxt-link class="linkDashboard" to="/utilisateur/dashboard" exact-active-class="active"><fa :icon="['fas', 'house']" /></nuxt-link>
       <ul>
-        <li><nuxt-link to="/utilisateur/exercices" exact-active-class="active">Exercices</nuxt-link></li>
-        <li><nuxt-link to="/utilisateur/profil" exact-active-class="active">Profil</nuxt-link></li>
         <li>
           <nuxt-link
             to="/utilisateur/seance"
@@ -13,7 +11,9 @@
             Séance
           </nuxt-link>
         </li>
+        <li><nuxt-link to="/utilisateur/exercices" exact-active-class="active">Exercices</nuxt-link></li>
         <li><nuxt-link to="/utilisateur/statistiques" exact-active-class="active">Statistiques</nuxt-link></li>
+        <li><nuxt-link to="/utilisateur/profil" exact-active-class="active">Profil</nuxt-link></li>
       </ul>
       <button @click="logout"><fa :icon="['fas', 'right-from-bracket']" /></button>
     </header>
@@ -42,7 +42,7 @@ export default {
 <style scoped>
 header {
   border-radius: 50px;
-  margin: 20px;
+  margin: 20px 20px 40px;
   background: var(--couleurPrincipale-2);
   color: white;
   padding: 10px 40px;

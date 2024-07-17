@@ -1,22 +1,23 @@
 <template>
   <div>
-    <h1>Tableau de bord</h1>
+    <h2>Séance du jour :</h2>
     <div v-if="noSessionToday" class="no-session">
       Aucune séance aujourd'hui
     </div>
     <div v-else>
-      <h2>Séance du jour :</h2>
       <div v-for="session in sessions" :key="session._id" class="session">
-        <h3>{{ session.nom }}</h3>
+        <h1>{{ session.nom }}</h1>
         <ul>
           <li v-for="exercise in session.exercises" :key="exercise._id">
-            <img :src="getExerciseImage(exercise.id_exercice_custom.photo)" alt="Image de l'exercice" class="exercise-image" />
-            <span>{{ exercise.id_exercice_custom.nom }}</span>
+            <div>
+              <img :src="getExerciseImage(exercise.id_exercice_custom.photo)" alt="Image de l'exercice" class="exercise-image" />
+              <span>{{ exercise.id_exercice_custom.nom }}</span>
+            </div>
             <span>{{ getMuscleGroupName(exercise.id_exercice_custom.id_groupe_musculaire) }}</span>
           </li>
         </ul>
       </div>
-      <button v-if="canStartSession" @click="startSession">Démarrer la séance</button>
+      <button v-if="canStartSession" @click="startSession">Démarrer la séance <span><fa :icon="['fas', 'play']" /></span></button>
     </div>
   </div>
 </template>
@@ -108,25 +109,81 @@ export default {
 </script>
 
 <style scoped>
+h1 {
+  text-align: center;
+  color: var(--couleurAccent-2);
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  margin-bottom: 50px;
+}
+
+h2 {
+  text-align: center;
+  color: var(--couleurPrincipale-1);
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+}
+
 .no-session {
   text-align: center;
   font-size: 1.5rem;
   color: #666;
 }
-
-.session {
-  margin-bottom: 2rem;
+.session ul {
+  margin: auto;
+  padding: 0;
+  max-width: 500px;
+  list-style: none;
+  border-radius: 20px !important;
+  overflow: hidden;
 }
 
-.exercise-image {
+.session ul li {
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--tailleContenu);
+  color: var(--couleurSecondaire-1);
+}
+
+.session ul li img {
+  border-radius: 100%;
   width: 50px;
   height: 50px;
   margin-right: 1rem;
 }
 
+.session ul li:nth-child(odd) {
+  background-color: var(--couleurSecondaire-3);
+}
+
+.session ul li:nth-child(even) {
+  background-color: var(--couleurSecondaire-4);
+}
+
 button {
   padding: 10px 20px;
-  font-size: 1rem;
   cursor: pointer;
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 300px;
+  border-radius: 40px;
+  border: none;
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  font-weight: bold;
+  transition: all 0.5s;
+}
+
+button:hover {
+  opacity: 80%;
 }
 </style>
