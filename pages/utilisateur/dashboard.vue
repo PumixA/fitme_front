@@ -62,7 +62,7 @@ export default {
         });
     },
     getExerciseImage(photo) {
-      return photo ? `http://localhost:4000/uploads/exercice_custom/${photo}` : '/images/default-exercise.png';
+      return photo ? `http://localhost:4000/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
     getMuscleGroupName(groupIds) {
       return groupIds.map(id => this.muscleGroups[id]?.nom || 'Groupe musculaire').join(', ');
