@@ -165,7 +165,9 @@ export default {
       imageError: '',
       isEditable: false,
       backendUrl: 'http://localhost:4000', // Direct URL to the backend
-      imageMode: '' // Track whether we're creating or editing
+      imageMode: '', // Track whether we're creating or editing
+      series: [],
+      newSeries: [{ index: 0, nombre_rep: 10, poids: 0 }]
     };
   },
   computed: {
@@ -208,6 +210,7 @@ export default {
         .then(response => {
           this.selectedExercice = response.data;
           this.tempImage = null; // Reset tempImage when editing a new exercise
+          this.updateSeries(); // Initialize series based on nombre_series
           this.showEditModal = true;
           this.isEditable = false;
         })
@@ -223,6 +226,7 @@ export default {
     },
     openCreateModal() {
       this.showCreateModal = true;
+      this.updateNewSeries(); // Initialize series based on nombre_series
     },
     closeCreateModal() {
       this.showCreateModal = false;
@@ -237,6 +241,7 @@ export default {
         temps_repos: 0,
         photo: null
       };
+      this.newSeries = [{ index: 0, nombre_rep: 10, poids: 0 }];
       this.tempImage = null;
       this.imageError = '';
     },
