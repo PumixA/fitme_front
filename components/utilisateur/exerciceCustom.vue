@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>Exercices Personnalisés</h2>
-    <button @click="openCreateModal" class="btn-primary">Ajouter un exercice</button>
+    <button v-if="seanceStatus.id_status_seance === null && seanceStatus.id_seance === null" @click="openCreateModal" class="btn-primary">Ajouter un exercice</button>
     <div class="search-filter">
       <input v-model="searchQuery" placeholder="Rechercher" />
       <select v-model="selectedGroup">
@@ -167,7 +167,8 @@ export default {
       backendUrl: 'http://localhost:4000', // Direct URL to the backend
       imageMode: '', // Track whether we're creating or editing
       series: [],
-      newSeries: [{ index: 0, nombre_rep: 10, poids: 0 }]
+      newSeries: [{ index: 0, nombre_rep: 10, poids: 0 }],
+      seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     };
   },
   computed: {
@@ -202,10 +203,22 @@ export default {
           console.error('Error fetching groupes musculaires:', error);
         });
     },
+    checkSeanceStatus() {
+      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+        .then(response => {
+          this.seanceStatus = response.data;
+        })
+        .catch(error => {
+          console.error('Error checking seance status:', error);
+        });
+    },
     getImageUrl(photo) {
       return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
     openEditModal(exercice) {
+      if (this.seanceStatus.id_status_seance !== null || this.seanceStatus.id_seance !== null) {
+        return;
+      }
       this.$axios.get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`)
         .then(response => {
           this.selectedExercice = response.data;
@@ -360,6 +373,7 @@ export default {
   mounted() {
     this.fetchExercices();
     this.fetchGroupesMusculaires();
+    this.checkSeanceStatus(); // Check seance status on mount
   }
 };
 </script>

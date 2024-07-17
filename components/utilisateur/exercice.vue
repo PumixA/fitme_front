@@ -28,7 +28,7 @@
           <div v-if="selectedExercice.lien_video">
             <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
           </div>
-          <button @click="addToMyExercices">Ajouter à mes exercices</button>
+          <button v-if="seanceStatus.id_status_seance === null && seanceStatus.id_seance === null" @click="addToMyExercices">Ajouter à mes exercices</button>
         </div>
       </div>
     </Modal>
@@ -52,7 +52,8 @@ export default {
       selectedGroup: '',
       showModal: false,
       selectedExercice: null,
-      backendUrl: 'http://localhost:4000' // Direct URL to the backend
+      backendUrl: 'http://localhost:4000', // Direct URL to the backend
+      seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     }
   },
   computed: {
@@ -110,10 +111,20 @@ export default {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = url.match(regExp);
       return (match && match[2].length === 11) ? match[2] : null;
-    }
+    },
+    checkSeanceStatus() {
+      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+        .then(response => {
+          this.seanceStatus = response.data;
+        })
+        .catch(error => {
+          console.error('Error checking seance status:', error);
+        });
+    },
   },
   mounted() {
     this.fetchExercices();
+    this.checkSeanceStatus();
   }
 }
 </script>
