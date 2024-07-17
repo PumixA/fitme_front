@@ -3,11 +3,18 @@
     <header>
       <nav>
         <ul>
-          <li><nuxt-link to="/utilisateur/dashboard">Dashboard</nuxt-link></li>
-          <li><nuxt-link to="/utilisateur/exercices">Exercices</nuxt-link></li>
-          <li><nuxt-link to="/utilisateur/profil">Profil</nuxt-link></li>
-          <li><nuxt-link to="/utilisateur/seance">Séance</nuxt-link></li>
-          <li><nuxt-link to="/utilisateur/statistiques">Statistiques</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/dashboard" exact-active-class="active">Dashboard</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/exercices" exact-active-class="active">Exercices</nuxt-link></li>
+          <li><nuxt-link to="/utilisateur/profil" exact-active-class="active">Profil</nuxt-link></li>
+          <li>
+            <nuxt-link
+              to="/utilisateur/seance"
+              :class="{ active: isSeanceActive }"
+            >
+              Séance
+            </nuxt-link>
+          </li>
+          <li><nuxt-link to="/utilisateur/statistiques" exact-active-class="active">Statistiques</nuxt-link></li>
           <li><button @click="logout">Logout</button></li>
         </ul>
       </nav>
@@ -20,6 +27,9 @@ export default {
   computed: {
     isAuthenticated () {
       return !!this.$store.state.token;
+    },
+    isSeanceActive() {
+      return this.$route.path.startsWith('/utilisateur/seance') || this.$route.path.startsWith('/utilisateur/gestionSeance');
     }
   },
   methods: {
@@ -48,6 +58,10 @@ nav ul {
 nav a {
   color: white;
   text-decoration: none;
+}
+
+nav .active {
+  color: #1abc9c; /* Changez cette couleur selon vos besoins */
 }
 
 button {
