@@ -51,6 +51,8 @@ export default {
     icons: {
       solid: [
         'faLock',
+        'faHouse',
+        'faRightFromBracket',
       ],
       regular: [
         'faUser',
