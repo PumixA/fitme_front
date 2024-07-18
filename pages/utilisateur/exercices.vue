@@ -1,9 +1,8 @@
 <template>
   <div>
-    <h1>Exercices</h1>
     <div class="tabs">
-      <button :class="{ active: activeTab === 'exercice' }" @click="activeTab = 'exercice'">Exercices</button>
-      <button :class="{ active: activeTab === 'exerciceCustom' }" @click="activeTab = 'exerciceCustom'">Exercices Personnalisés</button>
+      <p :class="{ active: activeTab === 'exerciceCustom' }" @click="activeTab = 'exerciceCustom'">Exercices Personnalisés</p>
+      <p :class="{ active: activeTab === 'exercice' }" @click="activeTab = 'exercice'">Exercices</p>
     </div>
     <div class="tab-content">
       <component :is="activeTabComponent"></component>
@@ -19,12 +18,12 @@ export default {
   middleware: 'auth',
   data() {
     return {
-      activeTab: 'exercice'
+      activeTab: 'exerciceCustom'
     }
   },
   computed: {
     activeTabComponent() {
-      return this.activeTab === 'exercice' ? Exercice : ExerciceCustom;
+      return this.activeTab === 'exerciceCustom' ? ExerciceCustom : Exercice;
     }
   }
 }
@@ -33,25 +32,23 @@ export default {
 <style scoped>
 .tabs {
   display: flex;
-  margin-bottom: 1em;
+  justify-content: center;
+  margin-bottom: 40px;
+  gap: 20px;
 }
 
-button {
-  flex: 1;
-  padding: 1em;
+p {
   cursor: pointer;
-  background: #f4f4f4;
-  border: 1px solid #ddd;
+  background: transparent;
+  border: none;
   text-align: center;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+  color: var(--couleurAccent-2);
 }
 
-button.active {
-  background: #ddd;
-  font-weight: bold;
-}
-
-.tab-content {
-  padding: 1em;
-  border: 1px solid #ddd;
+p.active {
+  text-decoration: underline;
+  color: var(--couleurPrincipale-1);
 }
 </style>

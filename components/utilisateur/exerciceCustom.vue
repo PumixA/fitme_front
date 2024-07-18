@@ -1,115 +1,128 @@
 <template>
   <div>
-    <h2>Exercices Personnalisés</h2>
-    <button v-if="seanceStatus.id_status_seance === null && seanceStatus.id_seance === null" @click="openCreateModal" class="btn-primary">Ajouter un exercice</button>
-    <div class="search-filter">
-      <input v-model="searchQuery" placeholder="Rechercher" />
-      <select v-model="selectedGroup">
-        <option value="">Tous les groupes</option>
-        <option v-for="group in uniqueGroups" :key="group" :value="group">{{ group }}</option>
-      </select>
-    </div>
-    <div class="exercice-list">
-      <div v-for="exercice in filteredExercices" :key="exercice._id" class="exercice-item" @click="openEditModal(exercice)">
-        <img :src="tempImages[exercice._id] || getImageUrl(exercice.photo)" alt="Photo de l'exercice" />
-        <div class="exercice-info">
-          <h3>{{ exercice.nom }}</h3>
+    <div class="exercice-container">
+      <div class="search-filter">
+        <input v-model="searchQuery" placeholder="Rechercher" />
+        <select v-model="selectedGroup">
+          <option value="">Tous les groupes</option>
+          <option v-for="group in uniqueGroups" :key="group" :value="group">{{ group }}</option>
+        </select>
+        <button v-if="seanceStatus.id_status_seance === null && seanceStatus.id_seance === null" @click="openCreateModal" class="boutonAjoutExercice">+</button>
+      </div>
+      <div class="exercice-list">
+        <div v-for="exercice in filteredExercices" :key="exercice._id" class="exercice-item" @click="openEditModal(exercice)">
+          <div class="exercice-info">
+            <img :src="tempImages[exercice._id] || getImageUrl(exercice.photo)" alt="Photo de l'exercice" />
+            <h3>{{ exercice.nom }}</h3>
+          </div>
           <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
         </div>
       </div>
     </div>
 
-    <Modal :visible="showEditModal" @close="closeEditModal" title="Modifier l'exercice personnalisé">
-      <div v-if="selectedExercice" class="modal-content">
-        <img :src="tempImage || getImageUrl(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-photo" @click="openImageModal('edit')" />
-        <div class="form-group">
-          <label for="nom">Nom</label>
-          <input type="text" v-model="selectedExercice.nom" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
-        </div>
-        <div class="form-group">
-          <label for="id_groupe_musculaire">Groupe Musculaire</label>
-          <select v-model="selectedExercice.id_groupe_musculaire[0]._id" @change="saveChanges">
-            <option v-for="groupe in groupesMusculaires" :key="groupe._id" :value="groupe._id">{{ groupe.nom }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="description">Description</label>
-          <textarea v-model="selectedExercice.description" readonly @dblclick="makeEditable($event)" @blur="saveChanges"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="lien_video">Lien Vidéo</label>
-          <input type="text" v-model="selectedExercice.lien_video" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
-        </div>
-        <div class="form-group">
-          <label for="nombre_series">Nombre de Séries</label>
-          <input type="number" v-model="selectedExercice.nombre_series" @input="updateSeries" @blur="saveChanges" min="0" />
-        </div>
-        <div v-for="(serie, index) in series" :key="index" class="series-group">
-          <h3>Série {{ index + 1 }}</h3>
-          <div class="form-group">
-            <label for="nombre_rep">Nombre de Répétitions</label>
-            <input type="number" v-model="serie.nombre_rep" @blur="saveSeriesChanges" min="0" />
-          </div>
-          <div class="form-group">
-            <label for="poids">Poids</label>
-            <input type="number" v-model="serie.poids" @blur="saveSeriesChanges" min="0" />
+    <Modal :visible="showEditModal" @close="closeEditModal">
+      <div v-if="selectedExercice" class="modal-contenu">
+        <div class="exercise-header">
+          <img :src="tempImage || getImageUrl(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" @click="openImageModal('edit')" />
+          <div class="exercise-headerRight">
+            <div class="form-group">
+              <input class="formTitle" type="text" v-model="selectedExercice.nom" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
+            </div>
+            <div class="form-group">
+              <select v-model="selectedExercice.id_groupe_musculaire[0]._id" @change="saveChanges">
+                <option v-for="groupe in groupesMusculaires" :key="groupe._id" :value="groupe._id">{{ groupe.nom }}</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label for="temps_repos">Temps de Repos (secondes)</label>
-          <input type="number" v-model="selectedExercice.temps_repos" readonly @dblclick="makeEditable($event)" @blur="saveChanges" min="0" />
+       <div class="exercise-body">
+         <div class="form-group">
+           <label for="description">Description</label>
+           <textarea v-model="selectedExercice.description" readonly @dblclick="makeEditable($event)" @blur="saveChanges"></textarea>
+         </div>
+         <div class="form-group">
+           <label for="lien_video">Lien Vidéo</label>
+           <input type="text" v-model="selectedExercice.lien_video" readonly @dblclick="makeEditable($event)" @blur="saveChanges" />
+         </div>
+       </div>
+        <div class="exercise-footer">
+          <div class="form-group form-group-series">
+            <label for="nombre_series">Nombre de Séries</label>
+            <input type="number" v-model="selectedExercice.nombre_series" @input="updateSeries" @blur="saveChanges" min="0" />
+          </div>
+          <div v-for="(serie, index) in series" :key="index" class="series-group exercise-series">
+            <h5>Série {{ index + 1 }}</h5>
+            <div class="series-form">
+              <div class="form-group">
+                <label for="nombre_rep" class="mini-label">Nombre de Répétitions</label>
+                <input type="number" v-model="serie.nombre_rep" @blur="saveSeriesChanges" min="0" />
+              </div>
+              <div class="form-group">
+                <label for="poids" class="mini-label">Poids</label>
+                <input type="number" v-model="serie.poids" @blur="saveSeriesChanges" min="0" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group form-group-series">
+            <label for="temps_repos">Temps de Repos (secondes)</label>
+            <input type="number" v-model="selectedExercice.temps_repos" readonly @dblclick="makeEditable($event)" @blur="saveChanges" min="0" />
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" @click="closeEditModal" class="btn-secondary">Annuler</button>
-          <button type="button" @click="deleteExercice" class="btn-danger">Supprimer</button>
-        </div>
+        <button type="button" @click="deleteExercice" class="boutonSupprimer"><fa :icon="['fas', 'trash']" /></button>
       </div>
     </Modal>
 
-    <Modal :visible="showCreateModal" @close="closeCreateModal" title="Ajouter un exercice personnalisé">
+    <Modal :visible="showCreateModal" @close="closeCreateModal">
       <div class="modal-body">
-        <form @submit.prevent="createExercice" class="modal-content">
-          <div class="form-group">
-            <label for="nom">Nom</label>
-            <input type="text" v-model="newExercice.nom" required />
-          </div>
-          <div class="form-group">
-            <label for="id_groupe_musculaire">Groupe Musculaire</label>
-            <select v-model="newExercice.id_groupe_musculaire" required>
-              <option v-for="groupe in groupesMusculaires" :key="groupe._id" :value="groupe._id">{{ groupe.nom }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea v-model="newExercice.description" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="lien_video">Lien Vidéo</label>
-            <input type="text" v-model="newExercice.lien_video" />
-          </div>
-          <div class="form-group">
-            <label for="nombre_series">Nombre de Séries</label>
-            <input type="number" v-model="newExercice.nombre_series" @input="updateNewSeries" required min="0" />
-          </div>
-          <div v-for="(serie, index) in newSeries" :key="index" class="series-group">
-            <h3>Série {{ index + 1 }}</h3>
-            <div class="form-group">
-              <label for="nombre_rep">Nombre de Répétitions</label>
-              <input type="number" v-model="serie.nombre_rep" min="0" />
-            </div>
-            <div class="form-group">
-              <label for="poids">Poids</label>
-              <input type="number" v-model="serie.poids" min="0" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="temps_repos">Temps de Repos (secondes)</label>
-            <input type="number" v-model="newExercice.temps_repos" required min="0" />
-          </div>
-          <div class="form-group">
+        <form @submit.prevent="createExercice" class="modal-contenu">
+          <div class="exercise-header">
             <img :src="tempImage || '/images/exercice.jpg'" alt="Photo de l'exercice" class="exercice-image" @click="openImageModal('create')" />
+            <div class="exercise-headerRight">
+              <div class="form-group">
+                <input class="formTitle" placeholder="Nom de l'exercice" type="text" v-model="newExercice.nom" required />
+              </div>
+              <div class="form-group">
+                <select v-model="newExercice.id_groupe_musculaire" required>
+                  <option value="" disabled selected>Groupe Musculaire</option>
+                  <option v-for="groupe in groupesMusculaires" :key="groupe._id" :value="groupe._id">{{ groupe.nom }}</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="modal-footer">
+          <div class="exercise-body">
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea v-model="newExercice.description" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lien_video">Lien Vidéo</label>
+              <input type="text" v-model="newExercice.lien_video" />
+            </div>
+          </div>
+          <div class="exercise-footer">
+            <div class="form-group form-group-series">
+              <label for="nombre_series">Nombre de Séries</label>
+              <input type="number" v-model="newExercice.nombre_series" @input="updateNewSeries" required min="0" />
+            </div>
+            <div v-for="(serie, index) in newSeries" :key="index" class="series-group exercise-series">
+              <h5>Série {{ index + 1 }}</h5>
+              <div class="series-form">
+                <div class="form-group">
+                  <label for="nombre_rep" class="mini-label">Nombre de Répétitions</label>
+                  <input type="number" v-model="serie.nombre_rep" min="0" />
+                </div>
+                <div class="form-group">
+                  <label for="poids" class="mini-label">Poids</label>
+                  <input type="number" v-model="serie.poids" min="0" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group form-group-series">
+              <label for="temps_repos">Temps de Repos (secondes)</label>
+              <input type="number" v-model="newExercice.temps_repos" required min="0" />
+            </div>
+          </div>
+          <div class="exercise-buttons">
             <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
             <button type="submit" class="btn-primary">Enregistrer</button>
           </div>
@@ -117,11 +130,11 @@
       </div>
     </Modal>
 
-    <Modal :visible="showImageModal" @close="closeImageModal" title="Changer la photo de l'exercice">
-      <form @submit.prevent="confirmImageUpload" class="modal-content">
+    <Modal :visible="showImageModal" @close="closeImageModal">
+      <form @submit.prevent="confirmImageUpload" class="modal-conu">
         <input type="file" @change="handleImageUpload" accept="image/png, image/jpeg" />
         <div v-if="imageError" class="error">{{ imageError }}</div>
-        <div class="modal-footer">
+        <div class="exercise-buttons">
           <button type="button" @click="closeImageModal" class="btn-secondary">Annuler</button>
           <button type="submit" class="btn-primary">Enregistrer</button>
         </div>
@@ -379,122 +392,288 @@ export default {
 </script>
 
 <style scoped>
+.exercice-container {
+  max-width: 750px;
+  padding-top: 50px;
+  margin: auto;
+}
+
 .search-filter {
   display: flex;
-  gap: 1em;
-  margin-bottom: 1em;
+  justify-content: space-between;
+  margin-bottom: 3em;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 0.5em;
-}
-
-select {
-  padding: 0.5em;
+.search-filter input, .search-filter select {
+  border-radius: 20px;
+  padding: 10px 20px;
+  border: solid 1px var(--couleurAdditionnelle-3);
+  background-color: var(--couleurSecondaire-3);
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
 }
 
 .exercice-list {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  width: 100%;
 }
 
 .exercice-item {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 1em;
-  background-color: #f4f4f4;
-  border: 1px solid #ddd;
+  background-color: var(--couleurSecondaire-4);
   cursor: pointer;
+  transition: box-shadow 0.3s ease-in-out;
+  width: 100%;
+  border-radius: 20px;
+  margin-bottom: 20px;
 }
 
 .exercice-item:hover {
-  background-color: #e0e0e0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
 }
 
 .exercice-item img {
   width: 50px;
   height: 50px;
   margin-right: 1em;
+  border-radius: 100%;
+}
+
+.exercice-item p {
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
+  padding: 0;
+  margin: 0;
 }
 
 .exercice-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
 }
 
-.exercice-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  cursor: pointer;
+.exercice-info h3 {
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
+  padding: 0;
+  margin: 0;
 }
 
-button {
-  background-color: #1abc9c;
-  color: white;
-  padding: 0.5em 1em;
-  border: none;
-  cursor: pointer;
+.modal-contenu {
+  position: relative;
 }
 
-button:hover {
-  background-color: #16a085;
-}
-
-.exercise-photo {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-right: 1em;
-}
-
-.form-group {
-  margin-bottom: 1em;
-}
-
-.series-group {
-  margin-bottom: 1em;
-}
-
-.btn-primary {
-  background-color: #1abc9c;
-  color: white;
-  border: none;
-  padding: 0.5em 1em;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background-color: #ccc;
-  color: #333;
-  border: none;
-  padding: 0.5em 1em;
-  cursor: pointer;
-}
-
-.btn-danger {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 0.5em 1em;
-  cursor: pointer;
-}
-
-.modal-footer {
+.exercise-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 50px;
+  padding-bottom: 40px;
 }
 
-.modal-content {
-  max-height: 90vh;
-  overflow-y: auto;
+.exercise-header img {
+  border-radius: 0;
+  width: 100px;
+  height: 100px;
+}
+
+.exercise-header h3 {
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+}
+
+.exercise-header h4 {
+  font-size: var(--tailleContenu);
+  font-family: var(--policeTitre);
+  color: var(--couleurAccent-2);
+  font-weight: normal;
+}
+
+.exercise-body {
+  padding-bottom: 40px;
+}
+
+.exercise-body p, .exercise-body .exercise-video {
+  width: 45%;
+}
+
+.exercise-body p {
+  font-size: var(--tailleContenu);
+  color: var(--couleurAccent-2);
+}
+
+.exercise-body, .exercise-video {
+  border-radius: 20px;
+}
+
+.exercise-footer h4 {
+  text-align: center;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  padding-bottom: 20px;
+}
+
+.exercise-footer h5 {
+  font-size: var(--tailleSousTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+
+.exercise-series {
+  margin-bottom: 40px;
+  padding: 10px 10px 0;
+  border-bottom: solid 1px var(--couleurAdditionnelle-3);
+}
+
+.exercise-footer .exercise-series p {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--tailleContenu);
+  color: var(--couleurAccent-2);
+}
+
+.exercise-repos {
+  text-align: center;
+  font-size: var(--tailleSousTitre);
+  color: var(--couleurAccent-2);
+}
+
+.addExerciseButton {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  border: none;
+  border-radius: 20px;
+  padding: 5px 20px;
+  margin: 20px auto auto;
+  display: block;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  font-weight: bold;
+}
+
+.completed-series {
+  background-color: var(--couleurAccent-1);
+}
+
+.completed-series h5 {
+  color: var(--couleurSecondaire-2);
+}
+
+.exercise-footer .completed-series p {
+  color: var(--couleurSecondaire-2);
+}
+
+.exercise-buttons button {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  border: none;
+  border-radius: 20px;
+  padding: 5px 20px;
+  margin: 20px auto auto;
+  display: block;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  font-weight: bold;
+}
+
+.exercise-buttons p {
+  text-align: center;
+  font-size: var(--tailleSousTitre);
+  color: var(--couleurAccent-2);
 }
 
 .error {
   color: red;
   margin-top: 10px;
+}
+
+form-group {
+  padding-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+  padding-bottom: 10px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  border-radius: 20px;
+  border: none;
+  font-size: var(--tailleContenu);
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  padding: 10px 20px;
+  color: var(--couleurAccent-2);
+  font-size: var(--tailleContenu);
+}
+
+.form-group textarea {
+  resize: none;
+  height: 200px;
+}
+
+.form-group .formTitle {
+  box-shadow: none;
+  border-radius: 0;
+  border-bottom: solid 1px var(--couleurAdditionnelle-3);
+  color: var(--couleurPrincipale-1);
+  font-size: var(--tailleTitre);
+  font-weight: var(--policeTitre);
+}
+
+.series-form {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-group .mini-label {
+  color: var(--couleurAccent-2);
+}
+
+.form-group-series {
+  margin: auto;
+  max-width: 200px;
+}
+
+.form-group-series label {
+  text-align: center;
+}
+
+.boutonSupprimer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  background-color: transparent;
+  border: none;
+}
+
+.exercise-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 20px;
+}
+
+.boutonAjoutExercice {
+  background-color: var(--couleurAccent-1);
+  color: var(--couleurSecondaire-2);
+  width: 50px;
+  line-height: 50px;
+  text-align: center;
+  border-radius: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
 }
 </style>
