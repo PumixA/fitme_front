@@ -54,6 +54,9 @@ export default {
         'faHouse',
         'faRightFromBracket',
         'faPlay',
+        'faStop',
+        'faChevronRight',
+        'faTrash',
       ],
       regular: [
         'faUser',

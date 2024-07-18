@@ -1,8 +1,11 @@
 <template>
   <div>
-    <h1 :class="{ 'non-clickable': isSeanceEnCours || isAnotherSeanceEnCours }" @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
-    <input v-if="isEditingName" v-model="seance.nom" @blur="updateSeanceName" @keyup.enter="updateSeanceName" />
-    <div class="days">
+    <div class="gestionSeanceContainer">
+      <div class="gestionSeanceHeader">
+        <div class="gestionSeanceHeaderContainer">
+          <h1 v-if="!isEditingName" :class="{ 'non-clickable': isSeanceEnCours || isAnotherSeanceEnCours }" @dblclick="handleDoubleClick">{{ seance.nom }}</h1>
+          <input v-if="isEditingName" v-model="seance.nom" @blur="updateSeanceName" @keyup.enter="updateSeanceName" />
+          <div class="days">
       <span
         v-for="day in days"
         :key="day.number"
@@ -12,85 +15,102 @@
       >
         {{ day.name }}
       </span>
-    </div>
-    <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="openAddExerciseModal" class="btn-primary">Ajouter un exercice</button>
-    <draggable v-model="seance.exercices" :disabled="isSeanceEnCours || isAnotherSeanceEnCours" @end="updateOrder" class="exercise-list">
-      <div
-        v-for="(exercice, index) in sortedExercices"
-        :key="exercice._id"
-        :class="['exercise-item', { 'effectue': exercice.status === 'effectue' }]"
-        @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)"
-      >
-        <img :src="getImagePath(exercice.id_exercice_custom?.photo || exercice.exercice?.photo)" alt="Photo de l'exercice" />
-        <div class="exercise-info">
-          <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
-          <p>{{ exercice.id_exercice_custom?.id_groupe_musculaire[0]?.nom || exercice.exercice?.id_groupe_musculaire[0]?.nom }}</p>
+          </div>
+          <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="deleteSeance" class="btn-delete-seance"><fa :icon="['fas', 'trash']" /></button>
         </div>
-        <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn">Supprimer</button>
+        <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="openAddExerciseModal" class="boutonAjouterExo">Ajouter un exercice</button>
       </div>
-    </draggable>
-    <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click="deleteSeance" class="btn-delete-seance">Supprimer la séance</button>
+      <div class="gestionSeanceBody">
+        <draggable v-model="seance.exercices" :disabled="isSeanceEnCours || isAnotherSeanceEnCours" @end="updateOrder" class="exercise-list">
+          <div
+            v-for="(exercice, index) in sortedExercices"
+            :key="exercice._id"
+            :class="['exercise-item exercice-item-drag', { 'effectue': exercice.status === 'effectue' }]"
+            @click="openExerciceDetails(exercice.id_exercice_custom?._id || exercice.exercice?._id)"
+          >
+            <div class="exercise-info">
+              <h3>{{ exercice.id_exercice_custom?.nom || exercice.exercice?.nom }}</h3>
+              <button v-if="!isSeanceEnCours && !isAnotherSeanceEnCours" @click.stop="deleteExercice(seance._id, exercice.id_exercice_custom?._id || exercice.exercice?._id)" class="delete-btn"><fa :icon="['fas', 'trash']" /></button>
+            </div>
+            <div class="infoImage" :style="{ backgroundImage: `url(${getImagePath(exercice.id_exercice_custom?.photo || exercice.exercice?.photo)})` }"></div>
+          </div>
+        </draggable>
+      </div>
+    </div>
 
     <!-- Modal for adding exercise -->
-    <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal" title="Ajouter un exercice">
-      <div class="modal-content">
+    <Modal :visible="showAddExerciseModal" @close="closeAddExerciseModal">
+      <div class="modal-contenu">
         <div v-for="exercice in allExercices" :key="exercice._id" class="exercise-item" @click="selectExercise(exercice)">
-          <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
           <div class="exercise-info">
-            <h3>{{ exercice.nom }}</h3>
-            <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
+            <img :src="getImagePath(exercice.photo)" alt="Photo de l'exercice" />
+            <span>{{ exercice.nom }}</span>
           </div>
+          <p>{{ exercice.id_groupe_musculaire[0].nom }}</p>
         </div>
       </div>
     </Modal>
 
     <!-- Modal for viewing selected exercise (when session is not started) -->
-    <Modal v-if="!isSeanceEnCours && !isAnotherSeanceEnCours && selectedExercice" :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal" title="Détails de l'exercice">
-      <div class="modal-content">
-        <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
-        <h3>{{ selectedExercice.nom }}</h3>
-        <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
-        <p>{{ selectedExercice.description }}</p>
-        <div v-if="selectedExercice.lien_video">
-          <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
+    <Modal v-if="!isSeanceEnCours && !isAnotherSeanceEnCours && selectedExercice" :visible="showSelectedExerciseModal" @close="closeSelectedExerciseModal">
+      <div class="modal-contenu-2">
+        <div class="exercise-header">
+          <img :src="getImagePath(selectedExercice.photo)" alt="Photo de l'exercice" class="exercise-image" />
+          <div class="exercise-headerRight">
+            <h3>{{ selectedExercice.nom }}</h3>
+            <p>{{ selectedExercice.id_groupe_musculaire[0].nom }}</p>
+          </div>
         </div>
-        <h4>Séries: {{ selectedExercice.nombre_series }}</h4>
-        <div v-for="(rep, index) in selectedExercice.nombre_rep" :key="index">
-          <h5>Série {{ index + 1 }}</h5>
-          <p>Reps: {{ rep }} | Poids: {{ selectedExercice.poids[index] }}</p>
-          <hr />
+        <div class="exercise-body">
+          <p>{{ selectedExercice.description }}</p>
+          <div v-if="selectedExercice.lien_video" class="exercise-video">
+            <YoutubePlayer :video-id="extractYoutubeVideoId(selectedExercice.lien_video)" />
+          </div>
         </div>
-        <p>Temps de repos: {{ formatTime(selectedExercice.temps_repos) }}</p>
-        <button v-if="showAddExerciseModal" @click="addToSeance">Ajouter à la séance</button>
+        <div class="exercise-footer">
+          <h4>Séries: {{ selectedExercice.nombre_series }}</h4>
+          <div v-for="(rep, index) in selectedExercice.nombre_rep" :key="index" class="exercise-series">
+            <h5>Série {{ index + 1 }}</h5>
+            <p><span>Reps: {{ rep }}</span><span>Poids: {{ selectedExercice.poids[index] }}</span></p>
+            <hr />
+          </div>
+          <p class="exercise-repos">Temps de repos: {{ formatTime(selectedExercice.temps_repos) }}</p>
+        </div>
+
+        <button v-if="showAddExerciseModal" @click="addToSeance" class="addExerciseButton">Ajouter à la séance</button>
       </div>
     </Modal>
 
     <!-- Modal for viewing exercise details in session (when session is started) -->
-    <Modal v-if="isSeanceEnCours && exerciseDetails" :visible="showExerciseDetailsModal" @close="closeExerciseDetailsModal" title="Détails de l'exercice">
-      <div class="modal-content">
-        <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
-        <h3>{{ exerciseDetails.nom }}</h3>
-        <p>{{ exerciseDetails.id_groupe_musculaire[0]?.nom }}</p>
-        <p>{{ exerciseDetails.description }}</p>
-        <div v-if="exerciseDetails.lien_video">
-          <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)" />
+    <Modal v-if="isSeanceEnCours && exerciseDetails" :visible="showExerciseDetailsModal" @close="closeExerciseDetailsModal">
+      <div class="modal-contenu-2">
+        <div class="exercise-header">
+          <img :src="getImagePath(exerciseDetails.photo)" alt="Photo de l'exercice" class="exercise-image" />
+          <div class="exercise-headerRight">
+            <h3>{{ exerciseDetails.nom }}</h3>
+            <p>{{ exerciseDetails.id_groupe_musculaire[0]?.nom }}</p>
+          </div>
+        </div>
+        <div class="exercise-body">
+          <p>{{ exerciseDetails.description }}</p>
+          <div v-if="exerciseDetails.lien_video"  class="exercise-video">
+            <YoutubePlayer :video-id="extractYoutubeVideoId(exerciseDetails.lien_video)"  />
+          </div>
+        </div>
+        <div class="exercise-footer">
+          <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
+          <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index" :class="{ 'completed-series': exerciseDetails.completedSeries[index] }" class="exercise-series">
+            <h5>Série {{ index + 1 }}</h5>
+            <p><span>Reps: {{ rep }}</span><span>Poids: {{ exerciseDetails.poids[index] }}</span></p>
+            <hr />
+          </div>
         </div>
 
-        <!-- Display series information -->
-        <h4>Séries: {{ exerciseDetails.nombre_series }}</h4>
-        <div v-for="(rep, index) in exerciseDetails.nombre_rep" :key="index" :class="{ 'completed-series': exerciseDetails.completedSeries[index] }">
-          <h5>Série {{ index + 1 }}</h5>
-          <p>Reps: {{ rep }} | Poids: {{ exerciseDetails.poids[index] }}</p>
-          <hr />
-        </div>
-
-        <!-- Show rest time when session is not started -->
         <div v-if="!isSeanceEnCours">
-          <p>Temps de repos: {{ formatTime(exerciseDetails.temps_repos) }}</p>
+          <p class="exercise-repos">Temps de repos: {{ formatTime(exerciseDetails.temps_repos) }}</p>
         </div>
 
-        <!-- Show action buttons when session is started -->
-        <div v-if="isSeanceEnCours">
+        <div v-if="isSeanceEnCours" class="exercise-buttons">
           <div v-if="exerciseDetails.statusExercice.status === 'non_effectue'">
             <button @click="handleExerciseAction(exerciseDetails._id)">Démarrer l'exercice</button>
           </div>
@@ -492,24 +512,54 @@ export default {
 </script>
 
 <style scoped>
-.seance-en-cours-text {
-  color: red;
+.gestionSeanceContainer {
+  margin: 0 40px;
+}
+.gestionSeanceHeader {
+  padding-bottom: 40px;
+}
+.gestionSeanceHeaderContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+}
+.gestionSeanceHeaderContainer h1 {
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  color: var(--couleurPrincipale-1);
   font-weight: bold;
-  margin-bottom: 10px;
+}
+.gestionSeanceHeaderContainer input {
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: solid var(--couleurSecondaire-1) 1px;
+  padding: 0;
 }
 .days {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
 }
 .days span {
-  padding: 10px;
-  border: 1px solid #ddd;
+  border: none;
+  padding: 0;
+  background-color: var(--couleurSecondaire-4);
+  color: var(--couleurSecondaire-1);
+  width: 35px;
+  line-height: 35px;
+  text-align: center;
+  border-radius: 100%;
+  font-size: var(--tailleSpan);
   cursor: pointer;
 }
 .days .active {
-  background-color: #1abc9c;
-  color: white;
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
 }
 .days .non-clickable {
   cursor: not-allowed;
@@ -518,39 +568,82 @@ export default {
 .non-clickable {
   pointer-events: none;
 }
-.exercise-item {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background-color: #f4f4f4;
-  border: 1px solid #ddd;
-  cursor: pointer;
-  position: relative;
+.boutonAjouterExo {
+  background-color: var(--couleurAccent-1);
+  color: var(--couleurSecondaire-2);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+  border: none;
+  transition: all 0.5s;
+}
+.boutonAjouterExo:hover {
+  opacity: 80%;
+}
+.exercice-item-drag {
   width: 24%;
+  background-color: var(--couleurSecondaire-2);
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.5s;
+  padding: 10px 20px;
 }
 .exercise-item.effectue {
-  background-color: green;
+  background-color: var(--couleurAccent-1);
 }
 .exercise-item:hover {
-  background-color: #e0e0e0;
+  opacity: 80%;
 }
-.exercise-item img {
-  width: 50px;
-  height: 50px;
-  margin-right: 10px;
+.infoImage {
+  width: 100%;
+  height: 90px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .exercise-info {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+}
+.exercise-info h3 {
+  font-size: var(--tailleContenu);
+  color: var(--couleurAccent-2);
+  font-weight: normal;
 }
 .exercise-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
-.modal-content {
-  max-height: 70vh;
-  overflow-y: auto;
+.modal-contenu .exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em;
+  background-color: var(--couleurSecondaire-4);
+  cursor: pointer;
+  transition: box-shadow 0.3s ease-in-out;
+  width: 415px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.modal-contenu .exercise-item img {
+  border-radius: 100%;
+  width: 50px;
+  height: 50px;
+  margin-right: 1rem;
+}
+.modal-contenu .exercise-info {
+  padding-bottom: 0;
+}
+.modal-contenu p {
+  padding: 0;
+  margin: 0;
 }
 .exercise-image {
   width: 100px;
@@ -558,42 +651,150 @@ export default {
   border-radius: 50%;
   margin-bottom: 10px;
 }
-button {
-  background-color: #1abc9c;
-  color: white;
-  padding: 0.5em 1em;
-  border: none;
-  cursor: pointer;
-}
-button:hover {
-  background-color: #16a085;
-}
 .delete-btn {
-  background-color: red;
-  color: white;
+  background-color: transparent;
+  color: var(--couleurAccent-2);
   padding: 0.5em;
   border: none;
-  border-radius: 5px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
   cursor: pointer;
+  font-size: var(--tailleContenu);
 }
 .delete-btn:hover {
-  background-color: darkred;
+  background-color: transparent;
+  opacity: 80%;
 }
 .btn-delete-seance {
-  background-color: red;
-  color: white;
+  color: var(--couleurAccent-2);
   padding: 0.5em 1em;
   border: none;
   cursor: pointer;
-  margin-top: 20px;
+  transition: all 0.5s;
+  background-color: transparent;
 }
 .btn-delete-seance:hover {
-  background-color: darkred;
+  opacity: 80%;
+  background-color: transparent;
 }
+
+.exercise-header {
+  display: flex;
+  gap: 50px;
+  padding-bottom: 40px;
+}
+
+.exercise-header img {
+  border-radius: 0;
+}
+
+.exercise-header h3 {
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+}
+
+.exercise-header h4 {
+  font-size: var(--tailleContenu);
+  font-family: var(--policeTitre);
+  color: var(--couleurAccent-2);
+  font-weight: normal;
+}
+
+.exercise-body {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 40px;
+}
+
+.exercise-body p, .exercise-body .exercise-video {
+  width: 45%;
+}
+
+.exercise-body p {
+  font-size: var(--tailleContenu);
+  color: var(--couleurAccent-2);
+}
+
+.exercise-body, .exercise-video {
+  border-radius: 20px;
+}
+
+.exercise-footer h4 {
+  text-align: center;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  padding-bottom: 20px;
+}
+
+.exercise-footer h5 {
+  font-size: var(--tailleSousTitre);
+  font-family: var(--policeTitre);
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  padding-bottom: 10px;
+}
+
+.exercise-series {
+  margin-bottom: 40px;
+  padding: 10px 10px 0;
+}
+
+.exercise-footer .exercise-series p {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--tailleContenu);
+  color: var(--couleurAccent-2);
+}
+
+.exercise-repos {
+  text-align: center;
+  font-size: var(--tailleSousTitre);
+  color: var(--couleurAccent-2);
+}
+
+.addExerciseButton {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  border: none;
+  border-radius: 20px;
+  padding: 5px 20px;
+  margin: 20px auto auto;
+  display: block;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  font-weight: bold;
+}
+
 .completed-series {
-  background-color: lightgreen;
+  background-color: var(--couleurAccent-1);
+}
+
+.completed-series h5 {
+  color: var(--couleurSecondaire-2);
+}
+
+.exercise-footer .completed-series p {
+  color: var(--couleurSecondaire-2);
+}
+
+.exercise-buttons button {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  border: none;
+  border-radius: 20px;
+  padding: 5px 20px;
+  margin: 20px auto auto;
+  display: block;
+  font-size: var(--tailleTitre);
+  font-family: var(--policeTitre);
+  font-weight: bold;
+}
+
+.exercise-buttons p {
+  text-align: center;
+  font-size: var(--tailleSousTitre);
+  color: var(--couleurAccent-2);
 }
 </style>

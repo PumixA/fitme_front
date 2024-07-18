@@ -53,6 +53,8 @@ export default {
   border-radius: 8px;
   max-width: 500px;
   max-height: 600px;
+  overflow-y: scroll;
+  position: relative;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 </style>

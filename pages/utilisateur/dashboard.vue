@@ -126,9 +126,10 @@ h2 {
 
 .no-session {
   text-align: center;
-  font-size: 1.5rem;
-  color: #666;
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleTitre)
 }
+
 .session ul {
   margin: auto;
   padding: 0;

@@ -1,9 +1,9 @@
 <template>
   <div>
     <div v-if="showButton" class="fixed-button" @click="handleButtonClick">
-      <span v-if="isSameSeance && seanceInProgress">Arrêter la séance (Chrono: {{ chrono }})</span>
-      <span v-else-if="shouldShowStartButton" @click.stop="startSeance">Commencer la séance</span>
-      <span v-else-if="seanceInProgress && !isSameSeance" @click="redirectToSeancePage">Une séance est en cours</span>
+      <span v-if="isSameSeance && seanceInProgress">{{ chrono }}<span><fa :icon="['fas', 'stop']" /></span></span>
+      <span v-else-if="shouldShowStartButton" @click.stop="startSeance">Commencer la séance<span><fa :icon="['fas', 'play']" /></span></span>
+      <span v-else-if="seanceInProgress && !isSameSeance" @click="redirectToSeancePage">Une séance est en cours<span><fa :icon="['fas', 'chevron-right']" /></span></span>
     </div>
   </div>
 </template>
@@ -180,16 +180,31 @@ export default {
 
 <style scoped>
 .fixed-button {
+  padding: 10px 20px;
+  cursor: pointer;
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
-  background-color: #1abc9c;
-  color: white;
-  cursor: pointer;
-  z-index: 1000;
-  text-align: center;
-  white-space: nowrap;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 300px;
+  border-radius: 40px;
+  border: none;
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  font-weight: bold;
+  transition: all 0.5s;
+}
+
+.fixed-button span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fixed-button:hover {
+  opacity: 80%;
 }
 </style>

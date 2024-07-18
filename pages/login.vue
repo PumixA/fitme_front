@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <div class="loginContent">
-      <h1>Inscription</h1>
+      <h1>Connexion</h1>
       <h2 class="subtitleLogin">Fitme (Bêta fermée)</h2>
       <form class="formLogin" @submit.prevent="login">
         <div class="formInputs">
