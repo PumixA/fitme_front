@@ -1,27 +1,39 @@
 <template>
   <div>
-    <h1>Statistiques</h1>
-    <div class="filter-container">
-      <select v-model="selectedExercice" @change="fetchStatistics">
-        <option value="" disabled>Choisissez un exercice</option>
-        <option v-for="exercise in exercises" :key="exercise._id" :value="exercise._id">
-          {{ exercise.nom }}
-        </option>
-      </select>
-      <select v-model="selectedFilter" @change="fetchStatistics">
-        <option value="" disabled>Choisissez un filtre</option>
-        <option value="poids">Poids</option>
-        <option value="rep">Réps</option>
-        <option value="serie">Séries</option>
-      </select>
-      <input type="date" v-model="startDate" @change="fetchStatistics" />
-      <input type="date" v-model="endDate" @change="fetchStatistics" />
-    </div>
-    <div v-if="!statistics || Object.keys(statistics).length === 0 || isStatisticsEmpty" class="no-data">
-      Aucune Statistique
-    </div>
-    <div v-else class="chart-container">
-      <canvas ref="chartCanvas"></canvas>
+    <div class="statistiquesContainer">
+      <div class="filter-container">
+        <div class="form-group">
+          <select v-model="selectedExercice" @change="fetchStatistics">
+            <option value="" disabled>Choisissez un exercice</option>
+            <option v-for="exercise in exercises" :key="exercise._id" :value="exercise._id">
+              {{ exercise.nom }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <select v-model="selectedFilter" @change="fetchStatistics">
+            <option value="" disabled>Choisissez un filtre</option>
+            <option value="poids">Poids</option>
+            <option value="rep">Réps</option>
+            <option value="serie">Séries</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Du</label>
+          <input type="date" v-model="startDate" @change="fetchStatistics" />
+        </div>
+        <div class="form-group">
+          <label>Au</label>
+          <input type="date" v-model="endDate" @change="fetchStatistics" />
+        </div>
+
+      </div>
+      <div v-if="!statistics || Object.keys(statistics).length === 0 || isStatisticsEmpty" class="no-data">
+        Aucune Statistique
+      </div>
+      <div v-else class="chart-container">
+        <canvas ref="chartCanvas"></canvas>
+      </div>
     </div>
   </div>
 </template>
@@ -136,9 +148,34 @@ export default {
 </script>
 
 <style scoped>
-.filter-container {
-  margin-bottom: 2rem;
+.statistiquesContainer {
+  margin: 0 40px;
 }
+
+.filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3em;
+}
+
+.filter-container input,  .filter-container select{
+  border-radius: 20px;
+  padding: 10px 20px;
+  border: solid 1px var(--couleurAdditionnelle-3);
+  background-color: var(--couleurSecondaire-3);
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
+}
+
+.filter-container label {
+  padding-right: 15px;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  font-weight: bold;
+  color: var(--couleurAccent-2);
+}
+
 
 .no-data {
   text-align: center;
@@ -148,8 +185,7 @@ export default {
 
 .chart-container {
   width: 100%;
-  max-width: 800px;
-  height: 400px;
+  height: 50vh;
   margin: 0 auto;
 }
 
