@@ -1,46 +1,88 @@
 <template>
   <div class="profile">
-    <h1>Profil</h1>
     <div class="profile-container">
       <div class="profile-header">
-        <img :src="profileImage" alt="Photo de profil" class="profile-image" @click="openPhotoModal" />
         <div class="profile-info">
+          <img :src="profileImage" alt="Photo de profil" class="profile-image" @click="openPhotoModal" />
           <h2>{{ profile.pseudo }}</h2>
-          <p>Inscrit le : {{ formatDate(profile.date_inscription) }}</p>
         </div>
+        <p>Inscrit le : {{ formatDate(profile.date_inscription) }}</p>
       </div>
       <div class="profile-form">
-        <div class="form-group">
+        <div class="form-group full-width">
           <label>Email (Non modifiable le temps de la bêta)</label>
           <input type="text" v-model="profile.email" readonly />
         </div>
-        <div class="form-group" v-for="field in editableFields" :key="field">
-          <label>{{ labels[field] }}</label>
-          <input
-            v-if="field !== 'genre'"
-            :type="isNumberField(field) ? 'number' : 'text'"
-            v-model="profile[field]"
-            :readonly="!isEditable[field] || isSessionActive"
-            @dblclick="makeEditable(field)"
-            @blur="saveField(field)"
-            :min="isNumberField(field) ? 0 : null"
-            :class="{ 'input-error': isNegativeNumber(profile[field]) }"
-          />
-          <select
-            v-if="field === 'genre'"
-            v-model="profile.genre"
-            @change="saveField(field, true)"
-            :disabled="isSessionActive"
-          >
-            <option value="homme">Homme</option>
-            <option value="femme">Femme</option>
-            <option value="autre">Autre</option>
-          </select>
-          <span v-if="isNegativeNumber(profile[field])" class="error-message">La valeur ne peut pas être négative.</span>
+        <div class="form-row">
+          <div class="form-group" v-for="field in ['nom', 'prenom']" :key="field">
+            <label>{{ labels[field] }}</label>
+            <input
+              :type="isNumberField(field) ? 'number' : 'text'"
+              v-model="profile[field]"
+              :readonly="!isEditable[field] || isSessionActive"
+              @dblclick="makeEditable(field)"
+              @blur="saveField(field)"
+              :min="isNumberField(field) ? 0 : null"
+              :class="{ 'input-error': isNegativeNumber(profile[field]) }"
+            />
+          </div>
         </div>
-        <div class="form-group">
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ labels['age'] }}</label>
+            <input
+              type="number"
+              v-model="profile['age']"
+              :readonly="!isEditable['age'] || isSessionActive"
+              @dblclick="makeEditable('age')"
+              @blur="saveField('age')"
+              min="0"
+              :class="{ 'input-error': isNegativeNumber(profile['age']) }"
+            />
+          </div>
+          <div class="form-group">
+            <label>{{ labels['genre'] }}</label>
+            <select
+              v-model="profile.genre"
+              @change="saveField('genre', true)"
+              :disabled="isSessionActive"
+            >
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ labels['poids'] }}</label>
+            <input
+              type="number"
+              v-model="profile['poids']"
+              :readonly="!isEditable['poids'] || isSessionActive"
+              @dblclick="makeEditable('poids')"
+              @blur="saveField('poids')"
+              min="0"
+              :class="{ 'input-error': isNegativeNumber(profile['poids']) }"
+            />
+          </div>
+          <div class="form-group">
+            <label>{{ labels['taille'] }}</label>
+            <input
+              type="number"
+              v-model="profile['taille']"
+              :readonly="!isEditable['taille'] || isSessionActive"
+              @dblclick="makeEditable('taille')"
+              @blur="saveField('taille')"
+              min="0"
+              :class="{ 'input-error': isNegativeNumber(profile['taille']) }"
+            />
+          </div>
+        </div>
+        <div class="form-group full-width center">
           <label>IMC</label>
           <input type="text" v-model="imc" readonly />
+          <span class="imcSpan">*L’IMC est votre indice de masse corporelle, il est calculé automatiquement en fonction de votre poids et de votre taille</span>
         </div>
       </div>
     </div>
@@ -238,11 +280,14 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 40px;
 }
 
 .profile-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   margin-bottom: 1em;
 }
 
@@ -254,30 +299,62 @@ export default {
   cursor: pointer;
 }
 
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .profile-info h2 {
   margin: 0;
 }
 
 .profile-form {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
+  flex-direction: column;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .form-group {
   flex: 1 1 45%;
   display: flex;
   flex-direction: column;
+  margin: 0.5em;
+}
+
+.full-width {
+  flex: 1 1 100%;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
 }
 
 .form-group label {
+  display: block;
+  color: var(--couleurAccent-2);
   font-weight: bold;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+  padding-bottom: 10px;
 }
 
-.form-group input,
-.form-group select {
-  padding: 0.5em;
-  margin-top: 0.5em;
+.form-group input, .form-group select {
+  max-width: 100%;
+  border-radius: 20px;
+  border: none;
+  font-size: var(--tailleContenu);
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  padding: 10px 20px;
+  color: var(--couleurAccent-2);
+  font-size: var(--tailleContenu);
 }
 
 .input-error {
@@ -288,4 +365,11 @@ export default {
   color: red;
   margin-top: 0.5em;
 }
+
+.imcSpan {
+  font-size: var(--tailleSpan);
+  color: var(--couleurAccent-2);
+  padding-top: 10px;
+}
 </style>
+
