@@ -1,10 +1,6 @@
 <template>
-  <div v-if="visible" class="modal-overlay">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3>{{ title }}</h3>
-        <button @click="close" class="close-button">X</button>
-      </div>
+  <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+    <div class="modal-container" @click.stop>
       <div class="modal-body">
         <slot></slot>
       </div>
@@ -27,6 +23,11 @@ export default {
   methods: {
     close() {
       this.$emit('close');
+    },
+    handleOverlayClick(event) {
+      if (event.target === event.currentTarget) {
+        this.close();
+      }
     }
   }
 }
@@ -48,28 +49,10 @@ export default {
 
 .modal-container {
   background: white;
-  padding: 20px;
+  padding: 20px 25px;
   border-radius: 8px;
-  max-width: 90%;
+  max-width: 500px;
+  max-height: 600px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
-}
-
-.modal-body {
-  padding-top: 10px;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.2em;
-  cursor: pointer;
 }
 </style>

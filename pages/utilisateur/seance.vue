@@ -1,36 +1,37 @@
 <template>
   <div>
-    <h1>Seance</h1>
-    <div class="search-filter">
-      <input v-model="searchQuery" placeholder="Rechercher" />
-      <button @click="filterByDay(null)" :class="{ active: selectedDay === null }">Tous</button>
-      <button v-for="(day, index) in days" :key="index" @click="filterByDay(index + 1)" :class="{ active: selectedDay === index + 1 }">{{ day }}</button>
-    </div>
-    <div class="seance-list">
-      <div v-for="seance in filteredSeances" :key="seance._id" class="seance-item" @click="goToSeance(seance._id)">
-        <div class="seance-name">{{ seance.nom }}</div>
-        <div class="seance-days">
-          <span v-for="day in seance.jour_seance" :key="day">{{ days[day - 1] }}</span>
-        </div>
+    <div class="seanceContainer">
+      <div class="search-filter">
+        <input v-model="searchQuery" placeholder="Rechercher" />
+        <button @click="filterByDay(null)" :class="{ active: selectedDay === null }">Tous</button>
+        <button v-for="(day, index) in days" :key="index" @click="filterByDay(index + 1)" :class="{ active: selectedDay === index + 1 }">{{ day }}</button>
       </div>
-    </div>
-    <button v-if="!isSessionActive" @click="openCreateModal" class="add-seance-btn">+</button>
-
-    <Modal :visible="showCreateModal" @close="closeCreateModal" title="Ajouter une séance">
-      <form @submit.prevent="createSeance" class="modal-content">
-        <div class="form-group">
-          <label for="nom">Nom de la séance</label>
-          <input type="text" v-model="newSeance.nom" required />
-        </div>
-        <div class="form-group">
-          <label>Jour de la séance</label>
-          <div class="days-selection">
-            <button v-for="(day, index) in days" :key="index" type="button" @click="toggleDay(index + 1)" :class="{ active: newSeance.jour_seance.includes(index + 1) }">{{ day }}</button>
+      <div class="seance-list">
+        <div v-for="seance in filteredSeances" :key="seance._id" class="seance-item" @click="goToSeance(seance._id)">
+          <div class="seance-name">{{ seance.nom }}</div>
+          <div class="seance-days">
+            <span v-for="day in seance.jour_seance" :key="day">{{ days[day - 1] }}</span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" @click="closeCreateModal" class="btn-secondary">Annuler</button>
-          <button type="submit" class="btn-primary">Enregistrer</button>
+      </div>
+      <button v-if="!isSessionActive" @click="openCreateModal" class="add-seance-btn">+</button>
+    </div>
+    <Modal :visible="showCreateModal" @close="closeCreateModal">
+      <form @submit.prevent="createSeance" class="modal-contenu">
+        <div class="modal-top">
+          <div class="form-group">
+            <label for="nom">Nom de la séance</label>
+            <input type="text" v-model="newSeance.nom" required />
+          </div>
+          <div class="form-group">
+            <div class="days-selection">
+              <button v-for="(day, index) in days" :key="index" type="button" @click="toggleDay(index + 1)" :class="{ active: newSeance.jour_seance.includes(index + 1) }">{{ day }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-bottom">
+          <button type="button" @click="closeCreateModal" class="bouton-annuler">Annuler</button>
+          <button type="submit" class="bouton-enregistrer">Enregistrer</button>
         </div>
       </form>
     </Modal>
@@ -135,30 +136,49 @@ export default {
 </script>
 
 <style scoped>
+.seanceContainer {
+  max-width: 750px;
+  padding-top: 50px;
+  margin: auto;
+}
+
 .search-filter {
   display: flex;
-  gap: 1em;
-  margin-bottom: 1em;
+  justify-content: space-between;
+  margin-bottom: 3em;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 0.5em;
+.search-filter input {
+  border-radius: 20px;
+  padding: 10px 20px;
+  border: solid 1px var(--couleurAdditionnelle-3);
+  background-color: var(--couleurSecondaire-3);
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
 }
 
-button {
-  padding: 0.5em;
+.search-filter button {
+  background-color: var(--couleurSecondaire-4);
+  border: none;
+  border-radius: 100%;
+  width: 50px;
+  line-height: 50px;
+  padding: 0;
+  text-align: center;
+  font-size: var(--tailleContenu);
+  color: var(--couleurSecondaire-1);
 }
 
 button.active {
-  background-color: #1abc9c;
-  color: white;
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
 }
 
 .seance-list {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  width: 100%;
 }
 
 .seance-item {
@@ -166,10 +186,11 @@ button.active {
   justify-content: space-between;
   align-items: center;
   padding: 1em;
-  background-color: #f4f4f4;
-  border: 1px solid #ddd;
+  background-color: var(--couleurSecondaire-4);
   cursor: pointer;
   transition: box-shadow 0.3s ease-in-out;
+  width: 100%;
+  border-radius: 20px;
 }
 
 .seance-item:hover {
@@ -177,7 +198,8 @@ button.active {
 }
 
 .seance-item .seance-name {
-  font-weight: bold;
+  color: var(--couleurSecondaire-1);
+  font-size: var(--tailleContenu);
 }
 
 .seance-item .seance-days {
@@ -185,28 +207,59 @@ button.active {
   gap: 0.5em;
 }
 
+.seance-item .seance-days span {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  width: 25px;
+  line-height: 25px;
+  text-align: center;
+  border-radius: 100%;
+  font-size: var(--tailleSpan);
+}
+
 .add-seance-btn {
   margin-top: 1em;
-  background-color: #1abc9c;
-  color: white;
+  background-color: var(--couleurAccent-1);
+  color: var(--couleurSecondaire-2);
   border: none;
   padding: 0.5em 1em;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 20px;
+  width: 100%;
   font-size: 1.5em;
+  transition: all 0.5s
 }
 
 .add-seance-btn:hover {
-  background-color: #16a085;
+  opacity: 80%;
 }
 
-.modal-content {
-  max-height: 90vh;
-  overflow-y: auto;
+.modal-top {
+  overflow-y: scroll;
 }
 
 .form-group {
-  margin-bottom: 1em;
+  padding-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: var(--couleurPrincipale-1);
+  font-weight: bold;
+  font-family: var(--policeTitre);
+  font-size: var(--tailleSousTitre);
+  padding-bottom: 10px;
+}
+
+.form-group input {
+  width: 100%;
+  border-radius: 20px;
+  border: none;
+  font-size: var(--tailleContenu);
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  padding: 10px 20px;
+  color: var(--couleurAccent-2);
+  font-size: var(--tailleContenu);
 }
 
 .days-selection {
@@ -214,30 +267,55 @@ button.active {
   gap: 0.5em;
 }
 
-.modal-footer {
+.days-selection button {
+  border: none;
+  padding: 0;
+  background-color: var(--couleurSecondaire-4);
+  color: var(--couleurSecondaire-1);
+  width: 35px;
+  line-height: 35px;
+  text-align: center;
+  border-radius: 100%;
+  font-size: var(--tailleSpan);
+}
+
+.days-selection button.active {
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+}
+
+.modal-bottom {
   display: flex;
   justify-content: space-between;
-  margin-top: 1em;
+  padding-top: 20px;
 }
 
-.btn-primary {
-  background-color: #1abc9c;
-  color: white;
+.bouton-annuler {
   border: none;
-  padding: 0.5em 1em;
-  cursor: pointer;
+  border-radius: 20px;
+  background-color: var(--couleurSecondaire-3);
+  color: var(--couleurSecondaire-2);
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  padding: 5px 0;
+  width: 45%;
+  transition: all 0.5s;
 }
 
-.btn-secondary {
-  background-color: #ccc;
-  color: #333;
+.bouton-enregistrer {
   border: none;
-  padding: 0.5em 1em;
-  cursor: pointer;
+  border-radius: 20px;
+  background-color: var(--couleurPrincipale-2);
+  color: var(--couleurSecondaire-2);
+  font-family: var(--policeTitre);
+  font-size: var(--tailleTitre);
+  padding: 5px 0;
+  width: 45%;
+  transition: all 0.5s;
 }
 
-button.active {
-  background-color: #1abc9c;
-  color: white;
+.bouton-annuler:hover, .bouton-enregistrer:hover {
+  opacity: 80%;
 }
+
 </style>
