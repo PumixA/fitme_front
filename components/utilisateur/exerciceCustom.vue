@@ -381,7 +381,10 @@ export default {
         nombre_rep: this.newExercice.nombre_rep[index] || 0,
         poids: this.newExercice.poids[index] || 0
       }));
-    }
+    },
+    makeEditable(event) {
+      event.target.readOnly = false;
+    },
   },
   mounted() {
     this.fetchExercices();

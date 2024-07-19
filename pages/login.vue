@@ -8,7 +8,7 @@
           <label for="email">Pseudo ou email</label>
           <div class="formInput">
             <span><fa :icon="['far', 'user']" /></span>
-            <input type="email" v-model="email" placeholder="Rentrez vos informations" required>
+            <input type="text" v-model="email" placeholder="Rentrez vos informations" required>
           </div>
         </div>
         <div class="formInputs">
