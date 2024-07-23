@@ -164,7 +164,7 @@ export default {
       this.$axios.get(`/admin/users/inviter/getone/${id}`)
         .then(response => {
           const invitation = response.data;
-          this.registrationLink = `http://localhost:3000/register/${invitation.registrationLink.split('/').pop()}`;
+          this.registrationLink = `${process.env.VUE_APP_FRONT_URL}/register/${invitation.registrationLink.split('/').pop()}`;
           this.showLinkModal = true;
           this.$nextTick(() => {
             this.generateQRCode(this.registrationLink);

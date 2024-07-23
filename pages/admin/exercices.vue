@@ -125,7 +125,6 @@ export default {
       tempImage: null,
       imageError: '',
       isEditable: false,
-      backendUrl: 'http://localhost:4000', // Direct URL to the backend
       imageMode: '' // Track whether we're creating or editing
     };
   },
@@ -138,7 +137,7 @@ export default {
   },
   methods: {
     fetchExercices() {
-      this.$axios.get(`${this.backendUrl}/api/admin/exercice`)
+      this.$axios.get(`/admin/exercice`)
         .then(response => {
           this.exercices = response.data;
         })
@@ -147,7 +146,7 @@ export default {
         });
     },
     fetchGroupeMusculaires() {
-      this.$axios.get(`${this.backendUrl}/api/admin/groupe_musculaire`)
+      this.$axios.get(`/admin/groupe_musculaire`)
         .then(response => {
           this.groupeMusculaires = response.data;
         })
@@ -184,7 +183,7 @@ export default {
         formData.append('photo', this.newExercice.photo);
       }
 
-      this.$axios.post(`${this.backendUrl}/api/admin/exercice/add`, formData)
+      this.$axios.post(`/admin/exercice/add`, formData)
         .then(() => {
           this.closeCreateModal();
           this.fetchExercices();
@@ -194,7 +193,7 @@ export default {
         });
     },
     openEditModal(exercice) {
-      this.$axios.get(`${this.backendUrl}/api/admin/exercice/getone/${exercice._id}`)
+      this.$axios.get(`/admin/exercice/getone/${exercice._id}`)
         .then(response => {
           this.selectedExercice = response.data;
           this.showEditModal = true;
@@ -220,7 +219,7 @@ export default {
         formData.append('photo', this.selectedExercice.photo);
       }
 
-      this.$axios.put(`${this.backendUrl}/api/admin/exercice/edit/${this.selectedExercice._id}`, formData)
+      this.$axios.put(`/admin/exercice/edit/${this.selectedExercice._id}`, formData)
         .then(() => {
           this.closeEditModal();
           this.fetchExercices();
@@ -268,7 +267,7 @@ export default {
         return this.tempImage;
       }
       if (exercice.photo) {
-        return `${this.backendUrl}/uploads/exercices/${exercice.photo}`;
+        return `${process.env.VUE_APP_API_URL}/uploads/exercices/${exercice.photo}`;
       }
       return '/images/exercice.jpg'; // Path to the default exercise image
     },

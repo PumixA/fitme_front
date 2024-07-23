@@ -174,7 +174,6 @@ export default {
       showAddExerciseModal: false,
       showSelectedExerciseModal: false,
       showExerciseDetailsModal: false,
-      backendUrl: 'http://localhost:4000',
       days: [
         { name: 'Lun', number: 1 },
         { name: 'Mar', number: 2 },
@@ -201,7 +200,7 @@ export default {
   methods: {
     async handleExerciseAction(exerciceId) {
       try {
-        await this.$axios.put(`${this.backendUrl}/api/seance/start/do_exercise/edit/${exerciceId}`);
+        await this.$axios.put(`/seance/start/do_exercise/edit/${exerciceId}`);
         await this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
         await this.fetchSeance(); // Update the exercise list background color
         this.exerciseDetails.finishedResting = false; // Reset finishedResting when action is handled
@@ -223,7 +222,7 @@ export default {
 
     async fetchExerciseDetails(seanceId, exerciceId) {
       try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
+        const response = await this.$axios.get(`/seance/start/getone_exercice/${seanceId}/${exerciceId}`);
         const { exerciceCustom, statusExercice } = response.data;
 
         const isResting = statusExercice.temps_repos.length > statusExercice.numero_serie;
@@ -261,7 +260,7 @@ export default {
 
     async selectExercise(exercice) {
       try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`);
+        const response = await this.$axios.get(`/exercice_custom/getone/${exercice._id}`);
         this.selectedExercice = response.data;
         this.showSelectedExerciseModal = true;
       } catch (error) {
@@ -320,7 +319,7 @@ export default {
     async fetchSeance() {
       const seanceId = this.$route.query.seanceId;
       try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/getone/${seanceId}`);
+        const response = await this.$axios.get(`/seance/getone/${seanceId}`);
         this.seance = response.data.seance;
         this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
       } catch (error) {
@@ -330,7 +329,7 @@ export default {
 
     async checkIfSeanceEnCours(seanceId) {
       try {
-        const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
+        const response = await this.$axios.get('/users/checkseance');
         if (response.data.id_seance === seanceId) {
           this.isSeanceEnCours = true;
           await this.fetchSeanceEnCours(seanceId); // Fetch exercises for the ongoing session
@@ -349,7 +348,7 @@ export default {
 
     async fetchSeanceEnCours(seanceId) {
       try {
-        const response = await this.$axios.get(`${this.backendUrl}/api/seance/start/get_exercices/${seanceId}`);
+        const response = await this.$axios.get(`/seance/start/get_exercices/${seanceId}`);
         this.seance = response.data.seance;
         this.seance.exercices = response.data.exercices.sort((a, b) => a.ordre - b.ordre);
       } catch (error) {
@@ -358,7 +357,7 @@ export default {
     },
 
     getImagePath(photo) {
-      return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
+      return photo ? `${process.env.VUE_APP_API_URL}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
 
     toggleDay(day) {
@@ -385,7 +384,7 @@ export default {
         nom: this.seance.nom,
       };
       this.$axios
-        .put(`${this.backendUrl}/api/seance/edit/${seanceId}`, data)
+        .put(`/seance/edit/${seanceId}`, data)
         .then(() => {
           this.fetchSeance();
         })
@@ -405,7 +404,7 @@ export default {
 
     fetchAllExercices() {
       this.$axios
-        .get(`${this.backendUrl}/api/exercice_custom/getall`)
+        .get(`/exercice_custom/getall`)
         .then((response) => {
           this.allExercices = response.data;
         })
@@ -416,7 +415,7 @@ export default {
 
     selectExercise(exercice) {
       this.$axios
-        .get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`)
+        .get(`/exercice_custom/getone/${exercice._id}`)
         .then((response) => {
           this.selectedExercice = response.data;
           this.showSelectedExerciseModal = true;
@@ -454,7 +453,7 @@ export default {
         this.fetchExerciseDetails(this.$route.query.seanceId, exerciceId);
       } else {
         this.$axios
-          .get(`${this.backendUrl}/api/exercice_custom/getone/${exerciceId}`)
+          .get(`/exercice_custom/getone/${exerciceId}`)
           .then((response) => {
             this.selectedExercice = response.data;
             this.showSelectedExerciseModal = true;
@@ -473,7 +472,7 @@ export default {
 
     deleteExercice(seanceId, exerciceCustomId) {
       this.$axios
-        .put(`${this.backendUrl}/api/seance/deleteExercice/${seanceId}/${exerciceCustomId}`)
+        .put(`/seance/deleteExercice/${seanceId}/${exerciceCustomId}`)
         .then(() => {
           this.fetchSeance();
         })
@@ -485,7 +484,7 @@ export default {
     deleteSeance() {
       const seanceId = this.$route.query.seanceId;
       this.$axios
-        .put(`${this.backendUrl}/api/seance/delete/${seanceId}`)
+        .put(`/seance/delete/${seanceId}`)
         .then(() => {
           this.$router.push('/utilisateur/seance');
         })

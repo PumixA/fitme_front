@@ -48,7 +48,6 @@ export default {
       users: [],
       showUserModal: false,
       selectedUser: null,
-      backendUrl: 'http://localhost:4000' // Direct URL to the backend
     };
   },
   computed: {
@@ -65,7 +64,7 @@ export default {
     },
     banUser(id) {
       if (confirm("Êtes-vous sûr de vouloir bannir cet utilisateur ?")) {
-        this.$axios.put(`${this.backendUrl}/api/admin/users/ban/${id}`)
+        this.$axios.put(`/admin/users/ban/${id}`)
           .then(response => {
             this.fetchUsers();
           })
@@ -75,7 +74,7 @@ export default {
       }
     },
     fetchUsers() {
-      this.$axios.get(`${this.backendUrl}/api/admin/users/actif`)
+      this.$axios.get(`/admin/users/actif`)
         .then(response => {
           this.users = response.data;
         })
@@ -84,7 +83,7 @@ export default {
         });
     },
     showUserDetails(id) {
-      this.$axios.get(`${this.backendUrl}/api/admin/users/getone/${id}`)
+      this.$axios.get(`/admin/users/getone/${id}`)
         .then(response => {
           this.selectedUser = response.data;
           this.showUserModal = true;
@@ -95,7 +94,7 @@ export default {
     },
     getUserProfileImage(user) {
       if (user.photo_profil) {
-        return `${this.backendUrl}/uploads/users/${user.photo_profil}`;
+        return `${process.env.VUE_APP_API_URL}/uploads/users/${user.photo_profil}`;
       }
       return '/images/photodeprofil.png'; // Path to the default profile image
     },

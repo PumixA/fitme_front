@@ -150,14 +150,13 @@ export default {
       showPhotoModal: false,
       selectedPhoto: null,
       photoError: '',
-      backendUrl: 'http://localhost:4000', // Direct URL to the backend
       seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     };
   },
   computed: {
     profileImage() {
       return this.profile.photo_profil
-        ? `${this.backendUrl}/uploads/users/${this.profile.photo_profil}`
+        ? `${process.env.VUE_APP_API_URL}/uploads/users/${this.profile.photo_profil}`
         : '/images/photodeprofil.png';
     },
     isSessionActive() {
@@ -166,7 +165,7 @@ export default {
   },
   methods: {
     fetchProfile() {
-      this.$axios.get(`${this.backendUrl}/api/users/get`)
+      this.$axios.get(`/users/get`)
         .then(response => {
           this.profile = response.data;
           this.calculateImc();
@@ -197,7 +196,7 @@ export default {
           return;
         }
         const updatedProfile = { ...this.profile };
-        this.$axios.put(`${this.backendUrl}/api/users/edit`, updatedProfile)
+        this.$axios.put(`/users/edit`, updatedProfile)
           .then(() => {
             this.$set(this.isEditable, key, false);
             this.calculateImc(); // Recalculate IMC if weight or height changes
@@ -243,7 +242,7 @@ export default {
         }
       });
 
-      this.$axios.put(`${this.backendUrl}/api/users/edit`, formData)
+      this.$axios.put(`/users/edit`, formData)
         .then(() => {
           this.closePhotoModal();
           this.fetchProfile(); // Refresh the profile to show the new photo
@@ -259,7 +258,7 @@ export default {
       return ['age', 'poids', 'taille'].includes(field);
     },
     checkSeanceStatus() {
-      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+      this.$axios.get(`/users/checkseance`)
         .then(response => {
           this.seanceStatus = response.data;
         })

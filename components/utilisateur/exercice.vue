@@ -59,7 +59,6 @@ export default {
       selectedGroup: '',
       showModal: false,
       selectedExercice: null,
-      backendUrl: 'http://localhost:4000', // Direct URL to the backend
       seanceStatus: { id_status_seance: null, id_seance: null } // Initial state
     }
   },
@@ -78,7 +77,7 @@ export default {
   },
   methods: {
     fetchExercices() {
-      this.$axios.get(`${this.backendUrl}/api/exercice/getall`)
+      this.$axios.get(`/exercice/getall`)
         .then(response => {
           this.exercices = response.data;
         })
@@ -87,10 +86,10 @@ export default {
         });
     },
     getImagePath(photo) {
-      return photo ? `${this.backendUrl}/uploads/exercices/${photo}` : '/images/exercice.jpg';
+      return photo ? `${process.env.VUE_APP_API_URL}/uploads/exercices/${photo}` : '/images/exercice.jpg';
     },
     openExerciceDetails(id) {
-      this.$axios.get(`${this.backendUrl}/api/exercice/getone/${id}`)
+      this.$axios.get(`/exercice/getone/${id}`)
         .then(response => {
           this.selectedExercice = response.data;
           this.showModal = true;
@@ -105,7 +104,7 @@ export default {
     },
     addToMyExercices() {
       if (this.selectedExercice) {
-        this.$axios.post(`${this.backendUrl}/api/exercice_custom/addfromexercice/${this.selectedExercice._id}`)
+        this.$axios.post(`/exercice_custom/addfromexercice/${this.selectedExercice._id}`)
           .then(() => {
             this.closeModal();
           })
@@ -120,7 +119,7 @@ export default {
       return (match && match[2].length === 11) ? match[2] : null;
     },
     checkSeanceStatus() {
-      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+      this.$axios.get(`/users/checkseance`)
         .then(response => {
           this.seanceStatus = response.data;
         })

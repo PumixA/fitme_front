@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -43,7 +45,8 @@ export default {
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
     'cookie-universal-nuxt',
-    '@nuxtjs/fontawesome'
+    '@nuxtjs/fontawesome',
+    '@nuxtjs/dotenv'
   ],
 
   fontawesome: {
@@ -68,7 +71,12 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: 'http://localhost:4000/api'
+    baseURL: `${process.env.VUE_APP_API_URL}/api`
+  },
+
+  env: {
+    VUE_APP_API_URL: process.env.VUE_APP_API_URL,
+    VUE_APP_FRONT_URL: process.env.VUE_APP_FRONT_URL
   },
 
   router: {

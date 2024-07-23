@@ -177,7 +177,6 @@ export default {
       selectedImage: null,
       imageError: '',
       isEditable: false,
-      backendUrl: 'http://localhost:4000', // Direct URL to the backend
       imageMode: '', // Track whether we're creating or editing
       series: [],
       newSeries: [{ index: 0, nombre_rep: 10, poids: 0 }],
@@ -199,7 +198,7 @@ export default {
   },
   methods: {
     fetchExercices() {
-      this.$axios.get(`${this.backendUrl}/api/exercice_custom/getall`)
+      this.$axios.get(`/exercice_custom/getall`)
         .then(response => {
           this.exercices = response.data;
         })
@@ -208,7 +207,7 @@ export default {
         });
     },
     fetchGroupesMusculaires() {
-      this.$axios.get(`${this.backendUrl}/api/groupe_musculaire`)
+      this.$axios.get(`/groupe_musculaire`)
         .then(response => {
           this.groupesMusculaires = response.data;
         })
@@ -217,7 +216,7 @@ export default {
         });
     },
     checkSeanceStatus() {
-      this.$axios.get(`${this.backendUrl}/api/users/checkseance`)
+      this.$axios.get(`/users/checkseance`)
         .then(response => {
           this.seanceStatus = response.data;
         })
@@ -226,13 +225,13 @@ export default {
         });
     },
     getImageUrl(photo) {
-      return photo ? `${this.backendUrl}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
+      return photo ? `${process.env.VUE_APP_API_URL}/uploads/exercice_custom/${photo}` : '/images/exercice.jpg';
     },
     openEditModal(exercice) {
       if (this.seanceStatus.id_status_seance !== null || this.seanceStatus.id_seance !== null) {
         return;
       }
-      this.$axios.get(`${this.backendUrl}/api/exercice_custom/getone/${exercice._id}`)
+      this.$axios.get(`/exercice_custom/getone/${exercice._id}`)
         .then(response => {
           this.selectedExercice = response.data;
           this.tempImage = null; // Reset tempImage when editing a new exercise
@@ -285,7 +284,7 @@ export default {
         formData.append('photo', this.newExercice.photo);
       }
 
-      this.$axios.post(`${this.backendUrl}/api/exercice_custom/add`, formData)
+      this.$axios.post(`/exercice_custom/add`, formData)
         .then(() => {
           this.closeCreateModal();
           this.fetchExercices();
@@ -308,7 +307,7 @@ export default {
         formData.append('photo', this.selectedExercice.photo);
       }
 
-      this.$axios.put(`${this.backendUrl}/api/exercice_custom/edit/${this.selectedExercice._id}`, formData)
+      this.$axios.put(`/exercice_custom/edit/${this.selectedExercice._id}`, formData)
         .then(() => {
           this.tempImages[this.selectedExercice._id] = this.tempImage; // Update the tempImage in the list
           this.fetchExercices();
@@ -323,7 +322,7 @@ export default {
       this.saveChanges();
     },
     deleteExercice() {
-      this.$axios.put(`${this.backendUrl}/api/exercice_custom/delete/${this.selectedExercice._id}`)
+      this.$axios.put(`/exercice_custom/delete/${this.selectedExercice._id}`)
         .then(() => {
           this.closeEditModal();
           this.fetchExercices();

@@ -74,7 +74,7 @@ export default {
   },
   methods: {
     fetchSeances() {
-      this.$axios.get('http://localhost:4000/api/seance/getall')
+      this.$axios.get('/seance/getall')
         .then(response => {
           this.seances = response.data;
         })
@@ -83,7 +83,7 @@ export default {
         });
     },
     checkSeanceStatus() {
-      this.$axios.get('http://localhost:4000/api/users/checkseance')
+      this.$axios.get('/users/checkseance')
         .then(response => {
           this.seanceStatus = response.data;
         })
@@ -118,7 +118,7 @@ export default {
       }
     },
     createSeance() {
-      this.$axios.post('http://localhost:4000/api/seance/add', this.newSeance)
+      this.$axios.post('/seance/add', this.newSeance)
         .then(() => {
           this.closeCreateModal();
           this.fetchSeances();

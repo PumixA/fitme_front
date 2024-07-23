@@ -50,7 +50,7 @@ export default {
     },
     async checkSeanceStatus() {
       try {
-        const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
+        const response = await this.$axios.get(`/users/checkseance`);
         const { id_seance } = response.data;
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -107,7 +107,7 @@ export default {
     },
     async startSeance() {
       try {
-        await this.$axios.post(`http://localhost:4000/api/seance/start/${this.seanceId}`);
+        await this.$axios.post(`/seance/start/${this.seanceId}`);
         this.seanceInProgress = true;
         this.checkSeanceStatus();
         this.$router.go();
@@ -117,7 +117,7 @@ export default {
     },
     async endSeance() {
       try {
-        await this.$axios.put(`http://localhost:4000/api/seance/end/${this.seanceId}`);
+        await this.$axios.put(`/seance/end/${this.seanceId}`);
         this.seanceInProgress = false;
         this.clearChronoInterval();
         this.chrono = '';
@@ -131,7 +131,7 @@ export default {
       this.clearChronoInterval();
 
       try {
-        const response = await this.$axios.get(`http://localhost:4000/api/seance/getchrono/${id_seance}`);
+        const response = await this.$axios.get(`/seance/getchrono/${id_seance}`);
         const { elapsed_time_seconds } = response.data;
         this.updateChrono(elapsed_time_seconds);
         this.chronoInterval = setInterval(() => {
@@ -149,7 +149,7 @@ export default {
     },
     async redirectToSeancePage() {
       try {
-        const response = await this.$axios.get('http://localhost:4000/api/users/checkseance');
+        const response = await this.$axios.get(`/users/checkseance`);
         const { id_seance } = response.data;
         const urlParams = new URLSearchParams(window.location.search);
         const seanceId = urlParams.get('seanceId');

@@ -68,12 +68,11 @@ export default {
       },
       selectedGroupe: null,
       isEditable: false,
-      backendUrl: 'http://localhost:4000' // Direct URL to the backend
     };
   },
   methods: {
     fetchGroupesMusculaires() {
-      this.$axios.get(`${this.backendUrl}/api/admin/groupe_musculaire`)
+      this.$axios.get(`/admin/groupe_musculaire`)
         .then(response => {
           this.groupesMusculaires = response.data;
         })
@@ -93,7 +92,7 @@ export default {
       this.newGroupe.nom = '';
     },
     createGroupeMusculaire() {
-      this.$axios.post(`${this.backendUrl}/api/admin/groupe_musculaire/add`, this.newGroupe)
+      this.$axios.post(`/admin/groupe_musculaire/add`, this.newGroupe)
         .then(() => {
           this.closeCreateModal();
           this.fetchGroupesMusculaires();
@@ -103,7 +102,7 @@ export default {
         });
     },
     openEditModal(groupe) {
-      this.$axios.get(`${this.backendUrl}/api/admin/groupe_musculaire/getone/${groupe._id}`)
+      this.$axios.get(`/admin/groupe_musculaire/getone/${groupe._id}`)
         .then(response => {
           this.selectedGroupe = response.data;
           this.showEditModal = true;
@@ -119,7 +118,7 @@ export default {
     },
     editGroupeMusculaire() {
       if (this.selectedGroupe) {
-        this.$axios.put(`${this.backendUrl}/api/admin/groupe_musculaire/edit/${this.selectedGroupe._id}`, { nom: this.selectedGroupe.nom })
+        this.$axios.put(`/admin/groupe_musculaire/edit/${this.selectedGroupe._id}`, { nom: this.selectedGroupe.nom })
           .then(() => {
             this.closeEditModal();
             this.fetchGroupesMusculaires();
